@@ -3,29 +3,32 @@
 ## written by Amy Van Cise using dada2
 
 ## set up working environment -------------------------------------------------------
-
+rm(list = ls())
+list.of.packages <- c("dada2", "tidyverse","seqinr")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages) #install from cran
 library(dada2)
 library(tidyverse)
 library(seqinr)
 
-fecal.seqs.file <- "C:/Users/Amy.M.VanCise/Downloads/Fastq/test"
+fecal.seqs.file <- "/Users/alexandriaim/Desktop/muri_sandbox/fastqs"
   #"/scratch/avancise/MURI/mod_3/primer_test/fastq_files"
-taxref <- "oneringtobindthem_reference.fasta"
+taxref <- "/Users/alexandriaim/Desktop/minion_sandbox/annotation/final_reference_database.fasta"
 
 ### read primer test metadata ------------------------------------------------------
 
-primer.data <- read.csv("C:/UsMURI_Module3_barcode_comparison_sizes.csv")
+primer.data <- read.csv("/Users/alexandriaim/Desktop/muri_sandbox/MURI301.csv")
 
 primer.data.pruned <- primer.data %>% 
   group_by(locus_shorthand) %>% 
   arrange(desc(primer_length)) %>% 
   slice_head()
 
-for (i in 1:nrow(primer.data.pruned)){
+#for (i in 1:nrow(primer.data.pruned)){
   
 ### read fastq files in working directory -------------------------------------------
-fnFs <- grep(primer.data.pruned$locus_shorthand[i], sort(list.files(fecal.seqs.file, pattern="_R1_001.fastq", full.names = TRUE)), value = TRUE)
-fnRs <- grep(primer.data.pruned$locus_shorthand[i], sort(list.files(fecal.seqs.file, pattern="_R2_001.fastq", full.names = TRUE)), value = TRUE)
+fnFs <- grep(primer.data.pruned$locus_shorthand[3], sort(list.files(fecal.seqs.file, pattern="_R1_001.fastq", full.names = TRUE)), value = TRUE)
+fnRs <- grep(primer.data.pruned$locus_shorthand[3], sort(list.files(fecal.seqs.file, pattern="_R2_001.fastq", full.names = TRUE)), value = TRUE)
 sample.names1 <- sapply(strsplit(basename(fnFs), "_"), `[`, 1)
 sample.names2 <- sapply(strsplit(basename(fnFs), "_"), `[`, 2)
 sample.names <- paste(sample.names1, sample.names2, sep = "_")
@@ -44,9 +47,9 @@ names(filtRs) <- sample.names
 
 ### Filter and Trim ---------------------------------------------------------------
 out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, 
-                     trimLeft = primer.data.pruned$primer_length[i], 
-                     truncLen=c(ifelse(primer.data.pruned$tapestation_amplicon_length[i] > 300, 230, primer.data.pruned$tapestation_amplicon_length[i] - 50),
-                                ifelse(primer.data.pruned$tapestation_amplicon_length[i] > 300, 230, primer.data.pruned$tapestation_amplicon_length[i] - 50)),
+                     trimLeft = primer.data.pruned$primer_length[3], 
+                     truncLen=c(ifelse(primer.data.pruned$tapestation_amplicon_length[3] > 300, 230, primer.data.pruned$tapestation_amplicon_length[3] - 50),
+                                ifelse(primer.data.pruned$tapestation_amplicon_length[3] > 300, 230, primer.data.pruned$tapestation_amplicon_length[3] - 50)),
                      maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
                      compress=TRUE, multithread=TRUE)
 
@@ -60,7 +63,7 @@ names(derepRs) <- sample.names
 
 ### Learn Error Rates
 dadaFs.lrn <- dada(derepFs, err=NULL, selfConsist = TRUE, multithread=TRUE)
-errF <- dadaFs.lrn[[1]]$err_out
+errF <- dadaFs.lrn[[1]]$err_out #dadaFs.lrn[[1]]$err_out
 dadaRs.lrn <- dada(derepRs, err=NULL, selfConsist = TRUE, multithread=TRUE)
 errR <- dadaRs.lrn[[1]]$err_out
 
@@ -88,9 +91,9 @@ colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "n
 rownames(track) <- sample.names
 
 ### Assign Taxonomy
-taxa <- assignTaxonomy(seqtab.nochim, taxref, tryRC = TRUE)
+taxa <- assignTaxonomy(seqtab.nochim, taxref, tryRC = TRUE, verbose = TRUE, multithread = TRUE, taxLevels = c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"))
 
 ### Save data
-save(seqtab.nochim, freq.nochim, track, taxa, file = paste0("MURI_primer_test_mastertax_dada2_QAQC_output", primer.data.pruned$locus_shorthand[i], ".Rdata", sep = ""))
+save(seqtab.nochim, freq.nochim, track, taxa, file = paste0("MURI_primer_test_mastertax_dada2_QAQC_output", primer.data.pruned$locus_shorthand[3], ".Rdata", sep = ""))
 
-}
+
