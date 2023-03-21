@@ -7,19 +7,19 @@
 
 # NOTE : NEED TO CHANGE PATHWAYS TO PATHWAYS ON SEDNA. CURRENTLY SET TO DIRECTORY STRUCTURE ON CEG
 # ALL_TAX_REF = ${1}
-ALL_PRIMER_DATA = ~/aim/muri_project/mod3/example_dir_structure/metadata/MURI301.csv
+# ALL_PRIMER_DATA=~/Desktop/muri_sandbox/example_data_structure/metadata/MURI301.csv
 
 
 #################### STEP 0: cd into pipeline directory and move input ####################
-cd ~/Desktop/muri_sandbox/example_dir_structure/
+cd ~/Desktop/muri_sandbox/example_data_structure/
 # mv ./fastq_holding_pen/${INPUT_FASTQ} ./raw_fastqs/
 ###############################################################
 
 #################### STEP 1: DADA2 ####################
 
 read -p 'Taxonomy Database to Input?:  ' first_tax
-RScript ./scripts/dada2QAQC.R ./raw_fastqs/ ${first_tax} ${ALL_PRIMER_DATA} 
-mv ./raw_fastqs/*.Rdata ../for_more_tax
+RScript ./scripts/dada2QAQC.R ./raw_fastqs ${first_tax} ${ALL_PRIMER_DATA} 
+mv ./*.Rdata ./for_more_tax
 
 ###############################################################
 
@@ -27,13 +27,13 @@ mv ./raw_fastqs/*.Rdata ../for_more_tax
 while true; do
 read -p 'Another round of Taxonomy? (y/n) ' tax_reply
 if [[ ${tax_reply} == "y" ]]; then
-cat assignTaxonomy_codes
+cat ./metadata/assignTaxonomy_codes
 read -p "Enter Primer Name: " primer
 
 # mifish
 if [[ $primer = "MFU" ]]
 then
-RScript ./scripts/assignTaxonomy.R ${TAX_REF_2} ${primer}
+RScript ./scripts/assignTaxonomy.R ./metadata/MiFish_12S_0223_dada2.fasta ${primer}
 
 
 # marver 1
@@ -45,13 +45,13 @@ RScript ./scripts/assignTaxonomy.R ${TAX_REF_2} ${primer}
 # d-loop
 elif [[ $primer = "DL" ]]
 then
-RScript ./scripts/assignTaxonomy.R ${TAX_REF_2} ${primer}
+RScript ./scripts/assignTaxonomy.R ./metadata/cetacean_dloop_taxonomy.fasta ${primer}
 
 
-# C18 
-elif [[ $primer = "C18" ]]
+# C16 
+elif [[ $primer = "C16" ]]
 then
-RScript ./scripts/assignTaxonomy.R ${TAX_REF_2} ${primer}
+RScript ./scripts/assignTaxonomy.R ./metadata/ceph_C16_sanger.fasta ${primer}
 
 # custom database input
 else 
@@ -59,6 +59,7 @@ echo "Seems like that isn't a primer we recognize..."
 read -p 'Input a custom database: ' custom_db
 read -p 'Primer Name: ' ${p_name}
 if [ -z ${custom_db} ]
+then
 break
 else 
 RScript ./scripts/assignTaxonomy.R ${custom_db} ${p_name}
@@ -73,8 +74,11 @@ done
 ###############################################################
 
 #################### STEP 3: Generate Report ####################
-
+cd ./scripts
 Rscript -e "rmarkdown::render('Primer_test_prelim_report.qmd',params=list(args = myarg))"
+cd ..
+mv ./scripts/primer_test_phyloseq.Rdata ./final_data/
+mv ./scripts/*html ./analysis_output/
 
 ###############################################################
 

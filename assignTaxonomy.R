@@ -8,17 +8,21 @@ library(dada2)
 library(tidyverse)
 library(seqinr)
 
-taxref <- "H:/My Drive/01 MMARINeDNA MURI/01 Module 3/02 Bioinformatic analysis/01.5 Reference Taxonomy/02 reference fasta/MIDORI2_UNIQ_NUC_GB253_CO1_DADA2.fasta.gz"
-loci.to.keep <- c("LRY")
-taxonomy_name <- "MIDORI_CO1"
+args <- commandArgs(trailingOnly=TRUE)
+
+taxref <- args[1]
+#taxref <- "~/Desktop/muri_sandbox/example_data_structure/metadata/cetacean_dloop_taxonomy.fasta"
+loci.to.keep <- c(args[2])
+taxonomy_name <- args[2]
 
 ## Load QAQC'ed data -----------------------------------------------------------------
 
-output.files <- list.files("H:/My Drive/01 MMARINeDNA MURI/01 Module 3/02 Bioinformatic analysis/02 pipeline output Rdata/", 
+output.files <- list.files("~/Desktop/muri_sandbox/example_data_structure/for_more_tax/", 
                            full.names = TRUE, pattern = "*.Rdata") 
 
 # filter for the primers we want to use on this particular taxonomy
 output.files <- output.files[which(grepl(paste(loci.to.keep, collapse = "|"),output.files))]
+print(output.files)
 
 
 output.list <- list()
@@ -37,9 +41,8 @@ for (i in 1:length(output.files)){
 output.list[[i]]$MIDORI_C16_C18 <- assignTaxonomy(output.list[[i]]$seqtab.nochim, taxref, tryRC = TRUE)
 
 temp <- output.list[[i]] 
-save(temp, file = paste0("H:/My Drive/01 MMARINeDNA MURI/01 Module 3/02 Bioinformatic analysis/02 pipeline output Rdata/MURI_", loci.to.keep[i], "_", taxonomy_name, ".Rdata"))
+save(temp, file = paste0("~/Desktop/muri_sandbox/example_data_structure/final_data/", loci.to.keep[i], "_", taxonomy_name, ".Rdata"))
 rm(temp)
-
 }
 
-save(output.list, file = paste0("H:/My Drive/01 MMARINeDNA MURI/01 Module 3/02 Bioinformatic analysis/02 pipeline output Rdata/MURI_", paste(loci.to.keep, collapse = "_"), "_", taxonomy_name, ".Rdata"))
+save(output.list, file = paste0("~/Desktop/muri_sandbox/example_data_structure/final_data/", paste(loci.to.keep, collapse = "_"), "_", taxonomy_name, ".Rdata"))

@@ -3,18 +3,24 @@
 ## written by Amy Van Cise using dada2
 
 ## set up working environment -------------------------------------------------------
-
+rm(list = ls())
+list.of.packages <- c("dada2", "tidyverse","seqinr")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages) #install from cran
 library(dada2)
 library(tidyverse)
 library(seqinr)
 
-fecal.seqs.file <- "C:/Users/Amy.M.VanCise/Downloads/Fastq/test"
-  #"/scratch/avancise/MURI/mod_3/primer_test/fastq_files"
-taxref <- "oneringtobindthem_reference.fasta"
+args <- commandArgs(trailingOnly=TRUE)
+
+fecal.seqs.file <- args[1]
+  #" ~/Desktop/muri_sandbox/fastqs/"
+taxref <- args[2]
+  # ~/Desktop/muri_sandbox/fastqs/
 
 ### read primer test metadata ------------------------------------------------------
 
-primer.data <- read.csv("C:/UsMURI_Module3_barcode_comparison_sizes.csv")
+primer.data <- read.csv(args[3])
 
 primer.data.pruned <- primer.data %>% 
   group_by(locus_shorthand) %>% 
@@ -22,7 +28,9 @@ primer.data.pruned <- primer.data %>%
   slice_head()
 
 for (i in 1:nrow(primer.data.pruned)){
-  
+  check <- grep(primer.data.pruned$locus_shorthand[i], sort(list.files(fecal.seqs.file, pattern="_R1_001.fastq", full.names = TRUE)), value = TRUE) #check if samples for i'th primer is present
+  if(length(check) > 0){
+    print(check)
 ### read fastq files in working directory -------------------------------------------
 fnFs <- grep(primer.data.pruned$locus_shorthand[i], sort(list.files(fecal.seqs.file, pattern="_R1_001.fastq", full.names = TRUE)), value = TRUE)
 fnRs <- grep(primer.data.pruned$locus_shorthand[i], sort(list.files(fecal.seqs.file, pattern="_R2_001.fastq", full.names = TRUE)), value = TRUE)
@@ -60,7 +68,7 @@ names(derepRs) <- sample.names
 
 ### Learn Error Rates
 dadaFs.lrn <- dada(derepFs, err=NULL, selfConsist = TRUE, multithread=TRUE)
-errF <- dadaFs.lrn[[1]]$err_out
+errF <- dadaFs.lrn[[1]]$err_out #dadaFs.lrn[[1]]$err_out
 dadaRs.lrn <- dada(derepRs, err=NULL, selfConsist = TRUE, multithread=TRUE)
 errR <- dadaRs.lrn[[1]]$err_out
 
@@ -88,9 +96,13 @@ colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "n
 rownames(track) <- sample.names
 
 ### Assign Taxonomy
-taxa <- assignTaxonomy(seqtab.nochim, taxref, tryRC = TRUE)
+taxa <- assignTaxonomy(seqtab.nochim, taxref, tryRC = TRUE, verbose = TRUE, multithread = TRUE, taxLevels = c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"))
 
 ### Save data
 save(seqtab.nochim, freq.nochim, track, taxa, file = paste0("MURI_primer_test_mastertax_dada2_QAQC_output", primer.data.pruned$locus_shorthand[i], ".Rdata", sep = ""))
-
 }
+}
+
+
+# use hashing for dada2!!!!
+# make compatible with all primers

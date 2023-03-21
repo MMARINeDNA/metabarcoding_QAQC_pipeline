@@ -18,10 +18,17 @@ page-layout: full
 #| message: false
 #| warning: false
 
+rm(list = ls())
+list.of.packages <- c("phyloseq", "tidyverse","pander","ggsci","ggplot2","pandoc")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
 library(phyloseq)
 library(tidyverse)
 library(pander)
 library(ggsci)
+library(ggplot2)
+library(pandoc)
 ```
 
 ## Background
@@ -37,7 +44,7 @@ This document combines the output from all batches, converts the data to the phy
 The following shows the mean read depth across all samples after each major filtering step in the dada2 pipeline.
 
 ```{r}
-output.files <- list.files("H:/My Drive/01 MMARINeDNA MURI/01 Module 3/02 Bioinformatic analysis/02 Pipeline output Rdata/", full.names = TRUE, pattern = "*.Rdata")
+output.files <- list.files("~/Desktop/muri_sandbox/example_data_structure/final_data/", full.names = TRUE, pattern = "*.Rdata")
 
 output.list <- list()
 
@@ -122,15 +129,14 @@ tax.table <- as.data.frame(dimnames(seqtab.nochim)[[2]]) %>%
 tax.table.fill <- tax.table %>% 
   filter(!(is.na(Genus))) %>% 
   group_by(Genus) %>% 
-  fill(c("Kingdom","Phylum","Class","Order","Family"), .direction = "downup")
-
+  fill(c("Kingdom","Phylum","Class","Order","Family"), .direction = "downup") %>% 
   column_to_rownames("asv") %>% 
   as.matrix()
 
 # build phyloseq
 ps <- phyloseq(otu_table(seqtab.nochim, taxa_are_rows=FALSE), 
                sample_data(samdf), 
-               tax_table(tax.table))
+               tax_table(tax.table.fill))
 
 # remove undetermined samples
 ps <- subset_samples(ps, primer != "Undetermined")
