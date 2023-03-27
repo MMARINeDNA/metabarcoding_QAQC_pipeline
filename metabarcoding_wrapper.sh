@@ -21,74 +21,83 @@ cd ~/Desktop/muri_sandbox/example_data_structure/
 ###############################################################
 
 #################### STEP 1: Use Cutadapt ####################
-cd raw_fastqs
-CUTADAPT=$(which cutadapt)
-for i in *
-do
-FILE_PRIM=$(echo ${i} | cut -d - -f 1)
-FILE_NAME=$(echo ${i} | cut -d . -f 1)
-if [[ ${FILE_PRIM} == "MFU" ]]; then
-if echo ${i} | grep -q "R1" ; then
-echo MFU R1 Detected
-${CUTADAPT} -a ${MFU_F} \
-    --discard-untrimmed \
-    -j 0 \
-    -q 30 \
-${i}> ../for_dada2/${i} 2> ../cutadapt_reports/${FILE_NAME}_trim_report.txt
-else
-echo MFU R2 Detected
-${CUTADAPT} -a ${MFU_R} \
-    --discard-untrimmed \
-    -j 0 \
-    -q 30 \
-${i}> ../for_dada2/${i} 2> ../cutadapt_reports/${FILE_NAME}_trim_report.txt
-fi
-elif [[ ${FILE_PRIM} == "DL" ]]; then
-if echo ${i} | grep -q "R1" ; then
-echo DL R1 Detected
-${CUTADAPT} -a ${DL_F} \
-    --discard-untrimmed \
-    -j 0 \
-    -q 30 \
-${i}> ../for_dada2/${i} 2> ../cutadapt_reports/${FILE_NAME}_trim_report.txt
-else
-echo DL R2 Detected
-${CUTADAPT} -a ${DL_R} \
-    --discard-untrimmed \
-    -j 0 \
-    -q 30 \
-${i}> ../for_dada2/${i} 2> ../cutadapt_reports/${FILE_NAME}_trim_report.txt
-fi
-fi
-done
+# echo starting primer and quality trimming... $(date +"%T")
+# sleep 3
+# cd raw_fastqs
+# CUTADAPT=$(which cutadapt)
+# for i in *R1*
+# do
+# FILE_PRIM=$(echo ${i} | cut -d - -f 1)
+# FILE_NAME=$(echo ${i} | cut -d . -f 1)
+# if [[ ${FILE_PRIM} == "MFU" ]]; then
+# if echo ${i} | grep -q "R1" ; then
+# echo MFU R1 Detected
+# ${CUTADAPT} -g ${MFU_F} \
+#     --discard-untrimmed \
+#     -j 0 \
+#     -q 10 \
+# ${i}> ../for_dada2/${i} 2> ../cutadapt_reports/${FILE_NAME}_trim_report.txt
+# else
+# echo MFU R2 Detected
+# ${CUTADAPT} -g ${MFU_R} \
+#     --discard-untrimmed \
+#     -j 0 \
+#     -q 10 \
+# ${i}> ../for_dada2/${i} 2> ../cutadapt_reports/${FILE_NAME}_trim_report.txt
+# fi
+# elif [[ ${FILE_PRIM} == "DL" ]]; then
+# if echo ${i} | grep -q "R1" ; then
+# echo DL R1 Detected
+# ${CUTADAPT} -g ${DL_F} \
+#     --discard-untrimmed \
+#     -j 0 \
+#     -q 10 \
+# ${i}> ../for_dada2/${i} 2> ../cutadapt_reports/${FILE_NAME}_trim_report.txt
+# else
+# echo DL R2 Detected
+# ${CUTADAPT} -g ${DL_R} \
+#     --discard-untrimmed \
+#     -j 0 \
+#     -q 10 \
+# ${i}> ../for_dada2/${i} 2> ../cutadapt_reports/${FILE_NAME}_trim_report.txt
+# fi
+# fi
+# done
 
-#grabbing important info from cutadapt reports and synthesize in overall_report.txt
-cd ../cutadapt_reports
-for i in *
-do 
-FILE_NAME=$(echo ${i} | cut -d . -f 1)
-echo ${FILE_NAME} >> overall_report.txt 
-grep Quality-trimmed $i >> overall_report.txt 
-grep "Reads with adapters" $i >> overall_report.txt 
-grep "Reads written (passing filters):" $i >> overall_report.txt 
-done
-cd ..
+# #grabbing important info from cutadapt reports and synthesize in overall_report.txt
+# echo starting reports...
+# cd ../cutadapt_reports
+# for i in *
+# do 
+# FILE_NAME=$(echo ${i} | cut -d . -f 1)
+# echo ${FILE_NAME} >> overall_report.txt 
+# grep Quality-trimmed $i >> overall_report.txt 
+# grep "Reads with adapters" $i >> overall_report.txt 
+# grep "Reads written (passing filters):" $i >> overall_report.txt 
+# done
+
+# cd ..
+# echo finished primer and quality trimming. $(date +"%T")
+# sleep 3
 
 ###############################################################
 
 #################### STEP 2: DADA2 ####################
 
-echo starting step 1 
+echo starting step 1: dada2 ... $(date +"%T")
+sleep 3
 read -p 'Taxonomy Database to Input?:  ' first_tax
 RScript ./scripts/dada2QAQC.R ./for_dada2 ${first_tax} ${ALL_PRIMER_DATA} 
 mv ./*.Rdata ./for_more_tax
-echo finished step 1
+echo finished step 1. $(date +"%T")
+sleep 3
 
 ###############################################################
 
 #################### STEP 3: Assign Taxonomy (again) ####################
 
-echo starting step 2
+echo starting step 2: assigning taxonomy again... $(date +"%T")
+sleep 2
 while true; do
 read -p 'Another round of Taxonomy? (y/n) ' tax_reply
 if [[ ${tax_reply} == "y" ]]; then
@@ -136,18 +145,22 @@ break
 fi
 done
 
-echo finished step 2
+echo finished step 2. $(date +"%T")
+sleep 3
 
 ###############################################################
 
 #################### STEP 4: Generate Report ####################
-echo starting step 3: making the stats file
+echo starting step 3: making the stats file... $(date +"%T")
+sleep 3
 cd ./scripts
 Rscript -e "rmarkdown::render('Primer_test_prelim_report.qmd')"
 cd ..
 mv ./scripts/primer_test_phyloseq.Rdata ./final_data/
 mv ./scripts/*html ./analysis_output/
-echo finished making the stats file
+echo finished step 3. $(date +"%T")
+sleep 2
+echo metabarcoding pipeline complete! $(date +"%T")
 
 ###############################################################
 

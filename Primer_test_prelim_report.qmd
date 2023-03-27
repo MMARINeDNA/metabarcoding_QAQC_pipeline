@@ -44,7 +44,7 @@ This document combines the output from all batches, converts the data to the phy
 The following shows the mean read depth across all samples after each major filtering step in the dada2 pipeline.
 
 ```{r}
-output.files <- list.files("~/Desktop/muri_sandbox/example_data_structure/final_data/", full.names = TRUE, pattern = "*.Rdata")
+output.files <- list.files("~/Desktop/muri_sandbox/example_data_structure/for_more_tax/", full.names = TRUE, pattern = "*.Rdata")
 
 output.list <- list()
 

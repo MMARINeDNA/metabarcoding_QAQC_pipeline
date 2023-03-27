@@ -17,7 +17,7 @@ taxonomy_name <- args[2]
 
 ## Load QAQC'ed data -----------------------------------------------------------------
 
-output.files <- list.files("~/Desktop/muri_sandbox/example_data_structure/for_more_tax/", 
+output.files <- list.files("~/Desktop/muri_sandbox/example_data_structure/for_more_tax", 
                            full.names = TRUE, pattern = "*.Rdata") 
 
 # filter for the primers we want to use on this particular taxonomy

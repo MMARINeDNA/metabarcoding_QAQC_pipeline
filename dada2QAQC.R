@@ -3,10 +3,6 @@
 ## written by Amy Van Cise using dada2
 
 ## set up working environment -------------------------------------------------------
-rm(list = ls())
-list.of.packages <- c("dada2", "tidyverse","seqinr")
-new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
-if(length(new.packages)) install.packages(new.packages) #install from cran
 library(dada2)
 library(tidyverse)
 library(seqinr)
@@ -16,21 +12,23 @@ args <- commandArgs(trailingOnly=TRUE)
 fecal.seqs.file <- args[1]
   #" ~/Desktop/muri_sandbox/fastqs/"
 taxref <- args[2]
-  # ~/Desktop/muri_sandbox/fastqs/
+  # " ~/Desktop/muri_sandbox/example_data_structure/metadata/cetacean_dloop_taxonomy.fasta"
 
 ### read primer test metadata ------------------------------------------------------
 
 primer.data <- read.csv(args[3])
+# ~/Desktop/muri_sandbox/example_data_structure/metadata/MURI301.csv
 
 primer.data.pruned <- primer.data %>% 
   group_by(locus_shorthand) %>% 
   arrange(desc(primer_length)) %>% 
   slice_head()
 
+#check if samples for i'th primer is present
 for (i in 1:nrow(primer.data.pruned)){
-  check <- grep(primer.data.pruned$locus_shorthand[i], sort(list.files(fecal.seqs.file, pattern="_R1_001.fastq", full.names = TRUE)), value = TRUE) #check if samples for i'th primer is present
+  check <- grep(primer.data.pruned$locus_shorthand[i], sort(list.files(fecal.seqs.file, pattern="_R1_001.fastq", full.names = TRUE)), value = TRUE) 
   if(length(check) > 0){
-    print(check)
+    
 ### read fastq files in working directory -------------------------------------------
 fnFs <- grep(primer.data.pruned$locus_shorthand[i], sort(list.files(fecal.seqs.file, pattern="_R1_001.fastq", full.names = TRUE)), value = TRUE)
 fnRs <- grep(primer.data.pruned$locus_shorthand[i], sort(list.files(fecal.seqs.file, pattern="_R2_001.fastq", full.names = TRUE)), value = TRUE)
@@ -51,8 +49,15 @@ names(filtRs) <- sample.names
 
 
 ### Filter and Trim ---------------------------------------------------------------
+
+# out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, 
+#                      trimLeft = 0, 
+#                     truncLen=0,
+#                      maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
+#                       compress=TRUE, multithread=TRUE)
+
 out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, 
-                     trimLeft = primer.data.pruned$primer_length[i], 
+                    trimLeft = primer.data.pruned$primer_length[i], 
                      truncLen=c(ifelse(primer.data.pruned$tapestation_amplicon_length[i] > 300, 230, primer.data.pruned$tapestation_amplicon_length[i] - 50),
                                 ifelse(primer.data.pruned$tapestation_amplicon_length[i] > 300, 230, primer.data.pruned$tapestation_amplicon_length[i] - 50)),
                      maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
@@ -105,4 +110,3 @@ save(seqtab.nochim, freq.nochim, track, taxa, file = paste0("MURI_primer_test_ma
 
 
 # use hashing for dada2!!!!
-# make compatible with all primers
