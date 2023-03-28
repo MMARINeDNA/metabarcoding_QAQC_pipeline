@@ -50,18 +50,18 @@ names(filtRs) <- sample.names
 
 ### Filter and Trim ---------------------------------------------------------------
 
-# out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, 
-#                      trimLeft = 0, 
-#                     truncLen=0,
-#                      maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
-#                       compress=TRUE, multithread=TRUE)
-
 out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, 
-                    trimLeft = primer.data.pruned$primer_length[i], 
-                     truncLen=c(ifelse(primer.data.pruned$tapestation_amplicon_length[i] > 300, 230, primer.data.pruned$tapestation_amplicon_length[i] - 50),
-                                ifelse(primer.data.pruned$tapestation_amplicon_length[i] > 300, 230, primer.data.pruned$tapestation_amplicon_length[i] - 50)),
-                     maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
-                     compress=TRUE, multithread=TRUE)
+                      trimLeft = 0, 
+                     truncLen=0,
+                      maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
+                       compress=TRUE, multithread=TRUE)
+
+# out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, 
+#                     trimLeft = primer.data.pruned$primer_length[i], 
+#                      truncLen=c(ifelse(primer.data.pruned$tapestation_amplicon_length[i] > 300, 230, primer.data.pruned$tapestation_amplicon_length[i] - 50),
+#                                 ifelse(primer.data.pruned$tapestation_amplicon_length[i] > 300, 230, primer.data.pruned$tapestation_amplicon_length[i] - 50)),
+#                      maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
+#                      compress=TRUE, multithread=TRUE)
 
 ### Dereplicate
 derepFs <- derepFastq(filtFs, verbose=TRUE)

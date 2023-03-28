@@ -21,64 +21,55 @@ cd ~/Desktop/muri_sandbox/example_data_structure/
 ###############################################################
 
 #################### STEP 1: Use Cutadapt ####################
-# echo starting primer and quality trimming... $(date +"%T")
-# sleep 3
-# cd raw_fastqs
-# CUTADAPT=$(which cutadapt)
-# for i in *R1*
-# do
-# FILE_PRIM=$(echo ${i} | cut -d - -f 1)
-# FILE_NAME=$(echo ${i} | cut -d . -f 1)
-# if [[ ${FILE_PRIM} == "MFU" ]]; then
-# if echo ${i} | grep -q "R1" ; then
-# echo MFU R1 Detected
-# ${CUTADAPT} -g ${MFU_F} \
-#     --discard-untrimmed \
-#     -j 0 \
-#     -q 10 \
-# ${i}> ../for_dada2/${i} 2> ../cutadapt_reports/${FILE_NAME}_trim_report.txt
-# else
-# echo MFU R2 Detected
-# ${CUTADAPT} -g ${MFU_R} \
-#     --discard-untrimmed \
-#     -j 0 \
-#     -q 10 \
-# ${i}> ../for_dada2/${i} 2> ../cutadapt_reports/${FILE_NAME}_trim_report.txt
-# fi
-# elif [[ ${FILE_PRIM} == "DL" ]]; then
-# if echo ${i} | grep -q "R1" ; then
-# echo DL R1 Detected
-# ${CUTADAPT} -g ${DL_F} \
-#     --discard-untrimmed \
-#     -j 0 \
-#     -q 10 \
-# ${i}> ../for_dada2/${i} 2> ../cutadapt_reports/${FILE_NAME}_trim_report.txt
-# else
-# echo DL R2 Detected
-# ${CUTADAPT} -g ${DL_R} \
-#     --discard-untrimmed \
-#     -j 0 \
-#     -q 10 \
-# ${i}> ../for_dada2/${i} 2> ../cutadapt_reports/${FILE_NAME}_trim_report.txt
-# fi
-# fi
-# done
+echo starting primer and quality trimming... $(date +"%T")
+sleep 3
+cd raw_fastqs
+CUTADAPT=$(which cutadapt)
+for i in *R1*
+do
+FILE_PRIM=$(echo ${i} | cut -d - -f 1) #grab primer name at beginning of file name
+FILE_NAME=$(echo ${i} | cut -d _ -f 1,2,3) #grab everything before R1 (aka sample name)
+R1=${i}
+R2=$(echo ${i} | sed 's/R1/R2/g')
+if [[ ${FILE_PRIM} == "MFU" ]]; then
+echo MFU Detected
+${CUTADAPT} -g ${MFU_F} \
+     -G "${MFU_R}" \
+     -o ../for_dada2/${R1} \
+     -p ../for_dada2/${R2} \
+    --discard-untrimmed \
+    -j 0 \
+    -q 10 \
+"${R1}" "${R2}" 1> "../cutadapt_reports/${FILE_NAME}_trim_report.txt"
+elif [[ ${FILE_PRIM} == "DL" ]]; then
+echo DL Detected
+${CUTADAPT} -g ${DL_F} \
+     -G "${DL_R}" \
+     -o ../for_dada2/${R1} \
+     -p ../for_dada2/${R2} \
+    --discard-untrimmed \
+    -j 0 \
+    -q 10 \
+"${R1}" "${R2}" 1> "../cutadapt_reports/${FILE_NAME}_trim_report.txt"
 
-# #grabbing important info from cutadapt reports and synthesize in overall_report.txt
-# echo starting reports...
-# cd ../cutadapt_reports
-# for i in *
-# do 
-# FILE_NAME=$(echo ${i} | cut -d . -f 1)
-# echo ${FILE_NAME} >> overall_report.txt 
-# grep Quality-trimmed $i >> overall_report.txt 
-# grep "Reads with adapters" $i >> overall_report.txt 
-# grep "Reads written (passing filters):" $i >> overall_report.txt 
-# done
+fi
+done
 
-# cd ..
-# echo finished primer and quality trimming. $(date +"%T")
-# sleep 3
+#grabbing important info from cutadapt reports and synthesize in overall_report.txt
+echo starting reports...
+cd ../cutadapt_reports
+for i in *
+do 
+FILE_NAME=$(echo ${i} | cut -d . -f 1)
+echo ${FILE_NAME} >> overall_report.txt 
+grep Quality-trimmed $i >> overall_report.txt 
+grep "Reads with adapters" $i >> overall_report.txt 
+grep "Reads written (passing filters):" $i >> overall_report.txt 
+done
+
+cd ..
+echo finished primer and quality trimming. $(date +"%T")
+sleep 3
 
 ###############################################################
 
@@ -102,7 +93,7 @@ while true; do
 read -p 'Another round of Taxonomy? (y/n) ' tax_reply
 if [[ ${tax_reply} == "y" ]]; then
 cat ./metadata/assignTaxonomy_codes
-read -p "Enter Primer Name: " primer
+read -p "Enter Ref DB Name: " primer
 
 # mifish
 if [[ $primer = "MFU" ]]
@@ -173,10 +164,7 @@ echo metabarcoding pipeline complete! $(date +"%T")
 # change output for assignTax directory IN R CODE
 # do we want it to ask all questions at the beginning of the run? or is it ok to ask when step 2 starts for example?
 # asv/hashing for dada2 step
-# change for loop in dada2 script to not break when it hits a primer that isn't there
-# enabling inputs for the R scripts
 # holding pen will be on QNAP and rest will be on SEDNA... need to figure out how to automatically move
-# note that DADA2
 # DBS FOR MIFISH AND MARVER1 WILL BE SAME
 # FINAL RUN USING CORRECT DBS AND FILE STRUCTURE
 # think about hashing for DADA2 because you can then use hash key and annoted hash table to classify already-found hashes (saves time and computation)
@@ -189,6 +177,8 @@ echo metabarcoding pipeline complete! $(date +"%T")
 # ask for multiple inputs
 # for cutadapt, make first step and make sure I's are turned to N's in csv file
 # really gotta change the trimming on DADA2- it's either trimming way too little (for the longer ones), and there's A LOT of varaition run-to-run
+# change for loop in dada2 script to not break when it hits a primer that isn't there
+# enabling inputs for the R scripts
 
 # THINGS TO CHANGE BEFORE HAND-OFF:
 # change script hard-coded paths
