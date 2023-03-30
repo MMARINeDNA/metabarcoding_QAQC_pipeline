@@ -9,11 +9,14 @@
 
 #################### VARIABLE ASSIGNMENT ####################
 ALL_PRIMER_DATA=~/Desktop/muri_sandbox/example_data_structure/metadata/MURI301.csv
-MFU_F="GTCGGTAAAACTCGTGCCAGC"
+MFU_F="GCCGGTAAAACTCGTGCCAGC"
 MFU_R="CATAGTGGGGTATCTAATCCCAGTTTG"
 DL_F="TCACCCAAAGCTGRARTTCTA"
 DL_R="GCGGGTTGCTGGTTTCACG"
-
+MV1_F="CGTGCCAGCCACCGCG"
+MV1_R="GGGTATCTAATCCYAGTTTG"
+C16_F="GACGAGAAGACCCTAWTGAGCT"
+C16_R="AAATTACGCTGTTATCCCT"
 
 #################### STEP 0: cd into pipeline directory and move input ####################
 cd ~/Desktop/muri_sandbox/example_data_structure/
@@ -39,7 +42,7 @@ ${CUTADAPT} -g ${MFU_F} \
      -p ../for_dada2/${R2} \
     --discard-untrimmed \
     -j 0 \
-    -q 10 \
+    -q 20 \
 "${R1}" "${R2}" 1> "../cutadapt_reports/${FILE_NAME}_trim_report.txt"
 elif [[ ${FILE_PRIM} == "DL" ]]; then
 echo DL Detected
@@ -49,7 +52,27 @@ ${CUTADAPT} -g ${DL_F} \
      -p ../for_dada2/${R2} \
     --discard-untrimmed \
     -j 0 \
-    -q 10 \
+    -q 20 \
+"${R1}" "${R2}" 1> "../cutadapt_reports/${FILE_NAME}_trim_report.txt"
+elif [[ ${FILE_PRIM} == "MV1" ]]; then
+echo MV1 Detected
+${CUTADAPT} -g ${MV1_F} \
+     -G "${MV1_R}" \
+     -o ../for_dada2/${R1} \
+     -p ../for_dada2/${R2} \
+    --discard-untrimmed \
+    -j 0 \
+    -q 20 \
+"${R1}" "${R2}" 1> "../cutadapt_reports/${FILE_NAME}_trim_report.txt"
+elif [[ ${FILE_PRIM} == "C16" ]]; then
+echo MV1 Detected
+${CUTADAPT} -g ${C16_F} \
+     -G "${C16_R}" \
+     -o ../for_dada2/${R1} \
+     -p ../for_dada2/${R2} \
+    --discard-untrimmed \
+    -j 0 \
+    -q 20 \
 "${R1}" "${R2}" 1> "../cutadapt_reports/${FILE_NAME}_trim_report.txt"
 
 fi
@@ -104,7 +127,7 @@ RScript ./scripts/assignTaxonomy.R ./metadata/MiFish_12S_0223_dada2.fasta ${prim
 # marver 1
 elif [[ $primer = "MV1" ]]
 then
-RScript ./scripts/assignTaxonomy.R ${TAX_REF_2} ${primer}
+RScript ./scripts/assignTaxonomy.R ./metadata/MiFish_12S_0223_dada2.fasta ${primer}
 
 
 # d-loop
