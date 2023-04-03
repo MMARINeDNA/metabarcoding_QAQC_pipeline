@@ -18,6 +18,7 @@ taxref <- args[2]
 
 primer.data <- read.csv(args[3])
 # ~/Desktop/muri_sandbox/example_data_structure/metadata/MURI301.csv
+metadata_location <-"~/Desktop/muri_sandbox/example_data_structure/metadata/"
 
 primer.data.pruned <- primer.data %>% 
   group_by(locus_shorthand) %>% 
@@ -28,14 +29,18 @@ primer.data.pruned <- primer.data %>%
 for (i in 1:nrow(primer.data.pruned)){
   check <- grep(primer.data.pruned$locus_shorthand[i], sort(list.files(fecal.seqs.file, pattern="_R1_001.fastq", full.names = TRUE)), value = TRUE) 
   if(length(check) > 0){
-    
+  
+      print(check)
 ### read fastq files in working directory -------------------------------------------
 fnFs <- grep(primer.data.pruned$locus_shorthand[i], sort(list.files(fecal.seqs.file, pattern="_R1_001.fastq", full.names = TRUE)), value = TRUE)
 fnRs <- grep(primer.data.pruned$locus_shorthand[i], sort(list.files(fecal.seqs.file, pattern="_R2_001.fastq", full.names = TRUE)), value = TRUE)
 sample.names1 <- sapply(strsplit(basename(fnFs), "_"), `[`, 1)
 sample.names2 <- sapply(strsplit(basename(fnFs), "_"), `[`, 2)
 sample.names <- paste(sample.names1, sample.names2, sep = "_")
-
+taxref <- grep(primer.data.pruned$locus_shorthand[i],list.files(path = metadata_location),value=TRUE)
+tax_location <- paste0(metadata_location,taxref)
+print("Running with Tax Database:")
+print(tax_location)
 ### vizualize read quality profiles
 #plotQualityProfile(fnFs[1:2])
 #plotQualityProfile(fnRs[1:2])
@@ -101,7 +106,7 @@ colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "n
 rownames(track) <- sample.names
 
 ### Assign Taxonomy
-taxa <- assignTaxonomy(seqtab.nochim, taxref, tryRC = TRUE, verbose = TRUE, multithread = TRUE, taxLevels = c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"))
+taxa <- assignTaxonomy(seqtab.nochim, tax_location, tryRC = TRUE, verbose = TRUE, multithread = TRUE, taxLevels = c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"))
 
 ### Save data
 save(seqtab.nochim, freq.nochim, track, taxa, file = paste0("MURI_primer_test_mastertax_dada2_QAQC_output", primer.data.pruned$locus_shorthand[i], ".Rdata", sep = ""))

@@ -42,7 +42,7 @@ ${CUTADAPT} -g ${MFU_F} \
      -p ../for_dada2/${R2} \
     --discard-untrimmed \
     -j 0 \
-    -q 20 \
+    -q 30 \
 "${R1}" "${R2}" 1> "../cutadapt_reports/${FILE_NAME}_trim_report.txt"
 elif [[ ${FILE_PRIM} == "DL" ]]; then
 echo DL Detected
@@ -52,7 +52,7 @@ ${CUTADAPT} -g ${DL_F} \
      -p ../for_dada2/${R2} \
     --discard-untrimmed \
     -j 0 \
-    -q 20 \
+    -q 30 \
 "${R1}" "${R2}" 1> "../cutadapt_reports/${FILE_NAME}_trim_report.txt"
 elif [[ ${FILE_PRIM} == "MV1" ]]; then
 echo MV1 Detected
@@ -62,7 +62,7 @@ ${CUTADAPT} -g ${MV1_F} \
      -p ../for_dada2/${R2} \
     --discard-untrimmed \
     -j 0 \
-    -q 20 \
+    -q 30 \
 "${R1}" "${R2}" 1> "../cutadapt_reports/${FILE_NAME}_trim_report.txt"
 elif [[ ${FILE_PRIM} == "C16" ]]; then
 echo MV1 Detected
@@ -72,7 +72,7 @@ ${CUTADAPT} -g ${C16_F} \
      -p ../for_dada2/${R2} \
     --discard-untrimmed \
     -j 0 \
-    -q 20 \
+    -q 30 \
 "${R1}" "${R2}" 1> "../cutadapt_reports/${FILE_NAME}_trim_report.txt"
 
 fi
@@ -133,7 +133,7 @@ RScript ./scripts/assignTaxonomy.R ./metadata/MiFish_12S_0223_dada2.fasta ${prim
 # d-loop
 elif [[ $primer = "DL" ]]
 then
-RScript ./scripts/assignTaxonomy.R ./metadata/cetacean_dloop_taxonomy.fasta ${primer}
+RScript ./scripts/assignTaxonomy.R ./metadata/cetacean_DL_taxonomy.fasta ${primer}
 
 
 # C16 

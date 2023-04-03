@@ -105,6 +105,7 @@ grep "Reads written (passing filters):" $i >> overall_report.txt
 done
 
 cd ..
+rm ./raw_fastqs/*
 echo finished primer and quality trimming. $(date +"%T")
 sleep 3
 
@@ -115,6 +116,7 @@ sleep 3
 echo starting step 1: dada2 ... $(date +"%T")
 RScript ./scripts/dada2QAQC.R ./for_dada2 ${FIRST_TAX} ${ALL_PRIMER_DATA} 
 mv ./*.Rdata ./for_more_tax
+rm ./for_dada2/*
 echo finished step 1. $(date +"%T")
 sleep 3
 

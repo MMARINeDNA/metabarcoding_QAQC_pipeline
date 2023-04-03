@@ -38,7 +38,8 @@ rm(temp_env)
 
 for (i in 1:length(output.files)){
 
-output.list[[i]]$MIDORI_C16_C18 <- assignTaxonomy(output.list[[i]]$seqtab.nochim, taxref, tryRC = TRUE)
+output.list[[i]]$testname <- assignTaxonomy(output.list[[i]]$seqtab.nochim, taxref, tryRC = TRUE)
+names(output.list[[1]])[length(output.list)] <- taxonomy_name
 
 temp <- output.list[[i]] 
 save(temp, file = paste0("~/Desktop/muri_sandbox/example_data_structure/final_data/", loci.to.keep[i], "_", taxonomy_name, ".Rdata"))
