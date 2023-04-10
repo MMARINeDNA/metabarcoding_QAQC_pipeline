@@ -42,7 +42,6 @@ ${CUTADAPT} -g ${MFU_F} \
      -p ../for_dada2/${R2} \
     --discard-untrimmed \
     -j 0 \
-    -q 30 \
 "${R1}" "${R2}" 1> "../cutadapt_reports/${FILE_NAME}_trim_report.txt"
 elif [[ ${FILE_PRIM} == "DL" ]]; then
 echo DL Detected
@@ -52,7 +51,6 @@ ${CUTADAPT} -g ${DL_F} \
      -p ../for_dada2/${R2} \
     --discard-untrimmed \
     -j 0 \
-    -q 30 \
 "${R1}" "${R2}" 1> "../cutadapt_reports/${FILE_NAME}_trim_report.txt"
 elif [[ ${FILE_PRIM} == "MV1" ]]; then
 echo MV1 Detected
@@ -62,7 +60,6 @@ ${CUTADAPT} -g ${MV1_F} \
      -p ../for_dada2/${R2} \
     --discard-untrimmed \
     -j 0 \
-    -q 30 \
 "${R1}" "${R2}" 1> "../cutadapt_reports/${FILE_NAME}_trim_report.txt"
 elif [[ ${FILE_PRIM} == "C16" ]]; then
 echo MV1 Detected
@@ -72,7 +69,6 @@ ${CUTADAPT} -g ${C16_F} \
      -p ../for_dada2/${R2} \
     --discard-untrimmed \
     -j 0 \
-    -q 30 \
 "${R1}" "${R2}" 1> "../cutadapt_reports/${FILE_NAME}_trim_report.txt"
 
 fi
@@ -98,83 +94,82 @@ sleep 3
 
 #################### STEP 2: DADA2 ####################
 
-echo starting step 1: dada2 ... $(date +"%T")
-sleep 3
-read -p 'Taxonomy Database to Input?:  ' first_tax
-RScript ./scripts/dada2QAQC.R ./for_dada2 ${first_tax} ${ALL_PRIMER_DATA} 
-mv ./*.Rdata ./for_more_tax
-echo finished step 1. $(date +"%T")
-sleep 3
+# echo starting step 1: dada2 ... $(date +"%T")
+# sleep 3
+# RScript ./scripts/dada2QAQC.R ./for_dada2
+# mv ./*.Rdata ./for_more_tax
+# echo finished step 1. $(date +"%T")
+# sleep 3
 
 ###############################################################
 
 #################### STEP 3: Assign Taxonomy (again) ####################
 
-echo starting step 2: assigning taxonomy again... $(date +"%T")
-sleep 2
-while true; do
-read -p 'Another round of Taxonomy? (y/n) ' tax_reply
-if [[ ${tax_reply} == "y" ]]; then
-cat ./metadata/assignTaxonomy_codes
-read -p "Enter Ref DB Name: " primer
+# echo starting step 2: assigning taxonomy again... $(date +"%T")
+# sleep 2
+# while true; do
+# read -p 'Another round of Taxonomy? (y/n) ' tax_reply
+# if [[ ${tax_reply} == "y" ]]; then
+# cat ./metadata/assignTaxonomy_codes
+# read -p "Enter Ref DB Name: " primer
 
-# mifish
-if [[ $primer = "MFU" ]]
-then
-RScript ./scripts/assignTaxonomy.R ./metadata/MiFish_12S_0223_dada2.fasta ${primer}
-
-
-# marver 1
-elif [[ $primer = "MV1" ]]
-then
-RScript ./scripts/assignTaxonomy.R ./metadata/MiFish_12S_0223_dada2.fasta ${primer}
+# # mifish
+# if [[ $primer = "MFU" ]]
+# then
+# RScript ./scripts/assignTaxonomy.R ./metadata/MiFish_12S_0223_dada2.fasta ${primer}
 
 
-# d-loop
-elif [[ $primer = "DL" ]]
-then
-RScript ./scripts/assignTaxonomy.R ./metadata/cetacean_DL_taxonomy.fasta ${primer}
+# # marver 1
+# elif [[ $primer = "MV1" ]]
+# then
+# RScript ./scripts/assignTaxonomy.R ./metadata/MiFish_12S_0223_dada2.fasta ${primer}
 
 
-# C16 
-elif [[ $primer = "C16" ]]
-then
-RScript ./scripts/assignTaxonomy.R ./metadata/ceph_C16_sanger.fasta ${primer}
+# # d-loop
+# elif [[ $primer = "DL" ]]
+# then
+# RScript ./scripts/assignTaxonomy.R ./metadata/cetacean_DL_taxonomy.fasta ${primer}
 
-# custom database input
-else 
-echo "Seems like that isn't a primer we recognize..."
-read -p 'Input a custom database: ' custom_db
-read -p 'Primer Name: ' ${p_name}
-if [ -z ${custom_db} ]
-then
-break
-else 
-RScript ./scripts/assignTaxonomy.R ${custom_db} ${p_name}
-fi
-fi
 
-else
-break
-fi
-done
+# # C16 
+# elif [[ $primer = "C16" ]]
+# then
+# RScript ./scripts/assignTaxonomy.R ./metadata/ceph_C16_sanger.fasta ${primer}
 
-echo finished step 2. $(date +"%T")
-sleep 3
+# # custom database input
+# else 
+# echo "Seems like that isn't a primer we recognize..."
+# read -p 'Input a custom database: ' custom_db
+# read -p 'Primer Name: ' ${p_name}
+# if [ -z ${custom_db} ]
+# then
+# break
+# else 
+# RScript ./scripts/assignTaxonomy.R ${custom_db} ${p_name}
+# fi
+# fi
+
+# else
+# break
+# fi
+# done
+
+# echo finished step 2. $(date +"%T")
+# sleep 3
 
 ###############################################################
 
 #################### STEP 4: Generate Report ####################
-echo starting step 3: making the stats file... $(date +"%T")
-sleep 3
-cd ./scripts
-Rscript -e "rmarkdown::render('Primer_test_prelim_report.qmd')"
-cd ..
-mv ./scripts/primer_test_phyloseq.Rdata ./final_data/
-mv ./scripts/*html ./analysis_output/
-echo finished step 3. $(date +"%T")
-sleep 2
-echo metabarcoding pipeline complete! $(date +"%T")
+# echo starting step 3: making the stats file... $(date +"%T")
+# sleep 3
+# cd ./scripts
+# Rscript -e "rmarkdown::render('Primer_test_prelim_report.qmd')"
+# cd ..
+# mv ./scripts/primer_test_phyloseq.Rdata ./final_data/
+# mv ./scripts/*html ./analysis_output/
+# echo finished step 3. $(date +"%T")
+# sleep 2
+# echo metabarcoding pipeline complete! $(date +"%T")
 
 ###############################################################
 
