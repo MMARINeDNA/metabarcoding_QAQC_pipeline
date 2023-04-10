@@ -6,6 +6,7 @@
 library(dada2)
 library(tidyverse)
 library(seqinr)
+library(ShortRead)
 
 ### read in fastq's ------------------------------------------------------
 #args <- commandArgs(trailingOnly=TRUE)
@@ -50,13 +51,40 @@ for (i in 1:nrow(primer.data)){
     filtRs <- file.path(fastq_location, "filtered", paste0(sample.names, "_R_filt.fastq.gz"))
     names(filtFs) <- sample.names
     names(filtRs) <- sample.names
-
+    
+    
+### Find quality trimming length ----------------------------------
+    n <- 500000
+    trimsF <- c()
+    for(f in fnFs[!is.na(fnFs)]) {
+      srqa <- qa(f, n=n)
+      df <- srqa[["perCycle"]]$quality
+      # Calculate summary statistics at each position
+      means <- rowsum(df$Score*df$Count, df$Cycle)/rowsum(df$Count, df$Cycle)
+      where_to_cut <- min(which(means<35))-1
+      trimsF <- append(where_to_cut, trimsF)
+    }
+    where_trim_all_Fs <- mean(trimsF)
+    
+    trimsR <- c()
+    for(r in fnRs[!is.na(fnRs)]) {
+      srqa <- qa(r, n=n)
+      df <- srqa[["perCycle"]]$quality
+      # Calculate summary statistics at each position
+      means <- rowsum(df$Score*df$Count, df$Cycle)/rowsum(df$Count, df$Cycle)
+      where_to_cut <- min(which(means<35))-1
+      trimsR <- append(where_to_cut, trimsR)
+    }
+    where_trim_all_Rs <- mean(trimsR)
+    #try sliding window rule instead of hard cutoff
+    #separate by F's and R's
+    
 
 ### Filter and Trim ---------------------------------------------------------------
     print("starting filter and trim")
     out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, 
                          trimRight = c(primer.data$primer_length_r[i],primer.data$primer_length_f[i]),
-                         truncLen=c(130,130),
+                         truncLen = c(where_trim_all_Fs,where_trim_all_Rs),
                           maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
                            compress=TRUE, multithread=FALSE)
 
@@ -68,6 +96,9 @@ for (i in 1:nrow(primer.data)){
     #                      compress=TRUE, multithread=TRUE)
 
 ### Dereplicate ---------------------------------------------------------------
+    exists <- file.exists(filtFs) & file.exists(filtRs)
+    filtFs <- filtFs[exists]
+    filtRs <- filtRs[exists]
     derepFs <- derepFastq(filtFs, verbose=TRUE)
     derepRs <- derepFastq(filtRs, verbose=TRUE)
 
@@ -104,10 +135,11 @@ for (i in 1:nrow(primer.data)){
 
 ### Assign Taxonomy ---------------------------------------------------------------
     print(paste0("Starting Taxonomy Assignment at ", Sys.time()))
-    taxa <- assignTaxonomy(seqtab.nochim,"~/Desktop/muri_sandbox/example_data_structure/metadata/MURI_MFU_MV1_TAX.fasta", tryRC = TRUE, verbose = TRUE, multithread = TRUE)
+    taxa <- assignTaxonomy(seqtab.nochim,tax_location, tryRC = TRUE, verbose = TRUE, multithread = TRUE)
 
 ### Save data ---------------------------------------------------------------
     save(seqtab.nochim, freq.nochim, track, taxref, file = paste0("MURI_primer_test_mastertax_dada2_QAQC_output", primer.data$locus_shorthand[i], ".Rdata", sep = ""))
   }
 }
+  
 
