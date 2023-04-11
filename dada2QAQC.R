@@ -8,13 +8,9 @@ library(tidyverse)
 library(seqinr)
 library(ShortRead)
 
-### read in fastq's ------------------------------------------------------
-#args <- commandArgs(trailingOnly=TRUE)
-#fastq_location <- args[1]
+### read in input files ------------------------------------------------------
 fastq_location <- "~/Desktop/muri_sandbox/example_data_structure/for_dada2"
-
-
-### read primer metadata ------------------------------------------------------
+output_location <- "~/Desktop/muri_sandbox/example_data_structure/final_data/"
 primer.data <- read.csv("~/Desktop/muri_sandbox/example_data_structure/metadata/primer_data.csv")
 
 
@@ -54,17 +50,17 @@ for (i in 1:nrow(primer.data)){
     
     
 ### Find quality trimming length ----------------------------------
+    print("Calculating quality trimming length...")
     n <- 500000
     trimsF <- c()
     for(f in fnFs[!is.na(fnFs)]) {
       srqa <- qa(f, n=n)
       df <- srqa[["perCycle"]]$quality
-      # Calculate summary statistics at each position
-      means <- rowsum(df$Score*df$Count, df$Cycle)/rowsum(df$Count, df$Cycle)
-      where_to_cut <- min(which(means<35))-1
-      trimsF <- append(where_to_cut, trimsF)
+      means <- rowsum(df$Score*df$Count, df$Cycle)/rowsum(df$Count, df$Cycle) #calculate mean qual at each cycle
+      where_to_cut <- min(which(means<30))-1 #trim first time mean qual dips below 30
+      trimsF <- append(where_to_cut, trimsF) 
     }
-    where_trim_all_Fs <- mean(trimsF)
+    where_trim_all_Fs <- median(trimsF) #get average of all trims - use this as Trunclen forwards
     
     trimsR <- c()
     for(r in fnRs[!is.na(fnRs)]) {
@@ -72,12 +68,18 @@ for (i in 1:nrow(primer.data)){
       df <- srqa[["perCycle"]]$quality
       # Calculate summary statistics at each position
       means <- rowsum(df$Score*df$Count, df$Cycle)/rowsum(df$Count, df$Cycle)
-      where_to_cut <- min(which(means<35))-1
+      where_to_cut <- min(which(means<30))-1
       trimsR <- append(where_to_cut, trimsR)
     }
-    where_trim_all_Rs <- mean(trimsR)
+    where_trim_all_Rs <- median(trimsR)
     #try sliding window rule instead of hard cutoff
-    #separate by F's and R's
+    both_length <- where_trim_all_Fs + where_trim_all_Rs
+    min_length <- primer.data$tapestation_amplicon_length_F[i] + 25
+    if(both_length < min_length){
+      stop("Trim qual too high- not enough overlap. Choose a new Q score.") #if you trim too much, can't overlap
+    }
+  
+    
     
 
 ### Filter and Trim ---------------------------------------------------------------
@@ -87,13 +89,6 @@ for (i in 1:nrow(primer.data)){
                          truncLen = c(where_trim_all_Fs,where_trim_all_Rs),
                           maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
                            compress=TRUE, multithread=FALSE)
-
-    # out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, 
-    #                     trimLeft = primer.data$primer_length[i], 
-    #                      truncLen=c(ifelse(primer.data$tapestation_amplicon_length[i] > 300, 230, primer.data$tapestation_amplicon_length[i] - 50),
-    #                                 ifelse(primer.data$tapestation_amplicon_length[i] > 300, 230, primer.data$tapestation_amplicon_length[i] - 50)),
-    #                      maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
-    #                      compress=TRUE, multithread=TRUE)
 
 ### Dereplicate ---------------------------------------------------------------
     exists <- file.exists(filtFs) & file.exists(filtRs)
@@ -136,10 +131,54 @@ for (i in 1:nrow(primer.data)){
 ### Assign Taxonomy ---------------------------------------------------------------
     print(paste0("Starting Taxonomy Assignment at ", Sys.time()))
     taxa <- assignTaxonomy(seqtab.nochim,tax_location, tryRC = TRUE, verbose = TRUE, multithread = TRUE)
-
+    
+    
+### Create Hashing  ---------------------------------------------------------------
+    
+    ### Output files
+    conv_file <- file.path(output_location,"hash_key.csv")
+    conv_file.fasta <- file.path(output_location,"hash_key.fasta")
+    ASV_file <-  file.path(output_location,"ASV_table.csv")
+    
+    seqtab.nochim.df <- as.data.frame(seqtab.nochim)
+    conv_table <- tibble( Hash = "", Sequence ="")
+    Hashes <- map_chr (colnames(seqtab.nochim.df), ~ digest(.x, algo = "sha1", serialize = F, skip = "auto"))
+    conv_table <- tibble (Hash = Hashes,
+                          Sequence = colnames(seqtab.nochim.df))
+    colnames(seqtab.nochim.df) <- Hashes
+    
+    write_csv(conv_table, conv_file) # write the table into a file
+    write.fasta(sequences = as.list(conv_table$Sequence),
+                names     = as.list(conv_table$Hash),
+                file.out = conv_file.fasta)
+    seqtab.nochim.df <- bind_cols(sample.metadata %>%
+                                    select(Sample_name, Locus),
+                                  seqtab.nochim.df)
+    current_asv <- seqtab.nochim.df %>%
+      pivot_longer(cols = c(- Sample_name, - Locus),
+                   names_to = "Hash",
+                   values_to = "nReads") %>%
+      filter(nReads > 0)
+    write_csv(current_asv, ASV_file)
+    
+    
 ### Save data ---------------------------------------------------------------
     save(seqtab.nochim, freq.nochim, track, taxref, file = paste0("MURI_primer_test_mastertax_dada2_QAQC_output", primer.data$locus_shorthand[i], ".Rdata", sep = ""))
   }
 }
   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
