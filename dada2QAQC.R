@@ -7,6 +7,7 @@ library(dada2)
 library(tidyverse)
 library(seqinr)
 library(ShortRead)
+library(digest)
 
 ### read in input files ------------------------------------------------------
 fastq_location <- "~/Desktop/muri_sandbox/example_data_structure/for_dada2"
@@ -152,7 +153,9 @@ for (i in 1:nrow(primer.data)){
     write.fasta(sequences = as.list(conv_table$Sequence),
                 names     = as.list(conv_table$Hash),
                 file.out = conv_file.fasta)
-    seqtab.nochim.df <- bind_cols(sample.metadata %>%
+    sample.df <- tibble::rownames_to_column(seqtab.nochim.df,"Sample_name")
+    sample.df <- data.frame(append(sample.df,c(Lable='MFU'), after = 1))
+    seqtab.nochim.df <- bind_cols(sample.df %>%
                                     select(Sample_name, Locus),
                                   seqtab.nochim.df)
     current_asv <- seqtab.nochim.df %>%
