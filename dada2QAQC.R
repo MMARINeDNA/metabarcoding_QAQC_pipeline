@@ -12,6 +12,7 @@ library(ShortRead)
 fastq_location <- "~/Desktop/muri_sandbox/example_data_structure/for_dada2"
 output_location <- "~/Desktop/muri_sandbox/example_data_structure/final_data/"
 primer.data <- read.csv("~/Desktop/muri_sandbox/example_data_structure/metadata/primer_data.csv")
+metadata_location <-"~/Desktop/muri_sandbox/example_data_structure/metadata/"
 
 
 ### check if samples for i'th primer is present -------------------------------------------
@@ -30,7 +31,6 @@ for (i in 1:nrow(primer.data)){
 
 
 ### find taxonomy database in metadata directory -------------------------------------------
-    metadata_location <-"~/Desktop/muri_sandbox/example_data_structure/metadata/"
     taxref <- grep(primer.data$locus_shorthand[i],list.files(path = metadata_location),value=TRUE)
     tax_location <- paste0(metadata_location,taxref)
     print("Running with Tax Database:")
@@ -50,7 +50,7 @@ for (i in 1:nrow(primer.data)){
     
     
 ### Find quality trimming length ----------------------------------
-    print("Calculating quality trimming length...")
+    print(paste0("Calculating quality trimming length...", Sys.time()))
     n <- 500000
     trimsF <- c()
     for(f in fnFs[!is.na(fnFs)]) {
@@ -80,16 +80,15 @@ for (i in 1:nrow(primer.data)){
     }
   
     
-    
-
 ### Filter and Trim ---------------------------------------------------------------
-    print("starting filter and trim")
+    print(paste0("starting filter and trim", Sys.time()))
     out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, 
                          trimRight = c(primer.data$primer_length_r[i],primer.data$primer_length_f[i]),
                          truncLen = c(where_trim_all_Fs,where_trim_all_Rs),
                           maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
                            compress=TRUE, multithread=FALSE)
 
+    
 ### Dereplicate ---------------------------------------------------------------
     exists <- file.exists(filtFs) & file.exists(filtRs)
     filtFs <- filtFs[exists]
@@ -97,13 +96,13 @@ for (i in 1:nrow(primer.data)){
     derepFs <- derepFastq(filtFs, verbose=TRUE)
     derepRs <- derepFastq(filtRs, verbose=TRUE)
 
-# Name the derep-class objects by the sample names
+    # Name the derep-class objects by the sample names
     names(derepFs) <- sample.names
     names(derepRs) <- sample.names
 
 ### Learn Error Rates ---------------------------------------------------------------
     dadaFs.lrn <- dada(derepFs, err=NULL, selfConsist = TRUE, multithread=TRUE)
-    errF <- dadaFs.lrn[[1]]$err_out #dadaFs.lrn[[1]]$err_out
+    errF <- dadaFs.lrn[[1]]$err_out
     dadaRs.lrn <- dada(derepRs, err=NULL, selfConsist = TRUE, multithread=TRUE)
     errR <- dadaRs.lrn[[1]]$err_out
 
@@ -135,11 +134,13 @@ for (i in 1:nrow(primer.data)){
     
 ### Create Hashing  ---------------------------------------------------------------
     
-    ### Output files
+    # define output files
     conv_file <- file.path(output_location,"hash_key.csv")
     conv_file.fasta <- file.path(output_location,"hash_key.fasta")
     ASV_file <-  file.path(output_location,"ASV_table.csv")
     
+    # create ASV table and hash key 
+    print(paste0("creating ASV table and hash key...", Sys.time()))
     seqtab.nochim.df <- as.data.frame(seqtab.nochim)
     conv_table <- tibble( Hash = "", Sequence ="")
     Hashes <- map_chr (colnames(seqtab.nochim.df), ~ digest(.x, algo = "sha1", serialize = F, skip = "auto"))
