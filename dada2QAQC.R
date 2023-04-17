@@ -14,6 +14,7 @@ fastq_location <- "~/Desktop/muri_sandbox/example_data_structure/for_dada2"
 output_location <- "~/Desktop/muri_sandbox/example_data_structure/final_data/"
 primer.data <- read.csv("~/Desktop/muri_sandbox/example_data_structure/metadata/primer_data.csv")
 metadata_location <-"~/Desktop/muri_sandbox/example_data_structure/metadata/"
+identified_hashes <- paste0(metadata_location,"prev_hashes.csv")
 
 
 ### check if samples for i'th primer is present -------------------------------------------
@@ -126,12 +127,6 @@ for (i in 1:nrow(primer.data)){
     track <- cbind(out, sapply(dadaFs, getN), sapply(dadaRs, getN), sapply(mergers, getN), rowSums(seqtab.nochim))
     colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim")
     rownames(track) <- sample.names
-
-
-### Assign Taxonomy ---------------------------------------------------------------
-    print(paste0("Starting Taxonomy Assignment at ", Sys.time()))
-    taxa <- assignTaxonomy(seqtab.nochim,tax_location, tryRC = TRUE, verbose = TRUE, multithread = TRUE)
-    
     
 ### Create Hashing  ---------------------------------------------------------------
     
@@ -149,8 +144,8 @@ for (i in 1:nrow(primer.data)){
                           Sequence = colnames(seqtab.nochim.df))
     colnames(seqtab.nochim.df) <- Hashes
     
-    write_csv(conv_table, conv_file) # write the table into a file
-    write.fasta(sequences = as.list(conv_table$Sequence),
+    write_csv(conv_table, conv_file) # write hash key into a csv
+    write.fasta(sequences = as.list(conv_table$Sequence), # write hash key into a fasta
                 names     = as.list(conv_table$Hash),
                 file.out = conv_file.fasta)
     sample.df <- tibble::rownames_to_column(seqtab.nochim.df,"Sample_name")
@@ -163,7 +158,19 @@ for (i in 1:nrow(primer.data)){
                    names_to = "Hash",
                    values_to = "nReads") %>%
       filter(nReads > 0)
-    write_csv(current_asv, ASV_file)
+    write_csv(current_asv, ASV_file) # write asv table into a csv
+
+### Separate out ASVs that have already been classified -----------------------------------------
+    Hash_key <- read_csv(conv_file)
+    Hash <- Hash_key %>% 
+      select(Hash, Sequence) %>% 
+      distinct()
+    new.set <- anti_join(Hash, previous.good.effort, by = c("Hash" = "representative")) # remove anything previously classified
+    
+
+### Assign Taxonomy ---------------------------------------------------------------
+    print(paste0("Starting Taxonomy Assignment at ", Sys.time()))
+    taxa <- assignTaxonomy(new.set,tax_location, tryRC = TRUE, verbose = TRUE, multithread = TRUE)
     
     
 ### Save data ---------------------------------------------------------------
