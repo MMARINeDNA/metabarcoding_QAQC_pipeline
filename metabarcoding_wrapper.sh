@@ -3,12 +3,11 @@
 # Metabarcoding Wrapper
 # written by: Alexandria Im
 # This wrapper takes in run you want to run as an input and has an interactive interface that allows you to run the entire pipeline and decide what primers/databases to use for the analysis.
-# USAGE: bash metabarcoding_wrapper.sh {INPUT_FASTQ}
+# USAGE: bash metabarcoding_wrapper.sh 
 
 # NOTE : NEED TO CHANGE PATHWAYS TO PATHWAYS ON SEDNA. CURRENTLY SET TO DIRECTORY STRUCTURE ON CEG
 
 #################### VARIABLE ASSIGNMENT ####################
-ALL_PRIMER_DATA=~/Desktop/muri_sandbox/example_data_structure/metadata/MURI301.csv
 MFU_F="GCCGGTAAAACTCGTGCCAGC"
 MFU_R="CATAGTGGGGTATCTAATCCCAGTTTG"
 DL_F="TCACCCAAAGCTGRARTTCTA"
@@ -94,12 +93,12 @@ sleep 3
 
 #################### STEP 2: DADA2 ####################
 
-# echo starting step 1: dada2 ... $(date +"%T")
-# sleep 3
-# RScript ./scripts/dada2QAQC.R ./for_dada2
-# mv ./*.Rdata ./for_more_tax
-# echo finished step 1. $(date +"%T")
-# sleep 3
+echo starting step 1: dada2 ... $(date +"%T")
+sleep 3
+RScript ./scripts/dada2QAQC.R 
+mv ./*.Rdata ./for_more_tax
+echo finished step 1. $(date +"%T")
+sleep 3
 
 ###############################################################
 
@@ -160,22 +159,22 @@ sleep 3
 ###############################################################
 
 #################### STEP 4: Generate Report ####################
-# echo starting step 3: making the stats file... $(date +"%T")
-# sleep 3
-# cd ./scripts
-# Rscript -e "rmarkdown::render('Primer_test_prelim_report.qmd')"
-# cd ..
-# mv ./scripts/primer_test_phyloseq.Rdata ./final_data/
-# mv ./scripts/*html ./analysis_output/
-# echo finished step 3. $(date +"%T")
-# sleep 2
-# echo metabarcoding pipeline complete! $(date +"%T")
+echo starting step 3: making the stats file... $(date +"%T")
+sleep 3
+cd ./scripts
+Rscript -e "rmarkdown::render('Primer_test_prelim_report.qmd')"
+cd ..
+mv ./scripts/primer_test_phyloseq.Rdata ./final_data/
+mv ./scripts/*html ./analysis_output/
+echo finished step 3. $(date +"%T")
+sleep 2
+echo metabarcoding pipeline complete! $(date +"%T")
 
 ###############################################################
 
 # TRIALS AND TRIBULATIONS
 # what does truncQ do? how different from cutadapt? what is the scale for scoring (2 is so low???)
-# is it cutadapt or dada2 that can't handle I's?
+# is it cutadapt lsor dada2 that can't handle I's?
 # 
 
 # TO-DO:

@@ -8,13 +8,14 @@ library(tidyverse)
 library(seqinr)
 library(ShortRead)
 library(digest)
+library(here)
 
 ### read in input files ------------------------------------------------------
-fastq_location <- "~/Desktop/muri_sandbox/example_data_structure/for_dada2"
-output_location <- "~/Desktop/muri_sandbox/example_data_structure/final_data/"
-primer.data <- read.csv("~/Desktop/muri_sandbox/example_data_structure/metadata/primer_data.csv")
-metadata_location <-"~/Desktop/muri_sandbox/example_data_structure/metadata/"
-identified_hashes <- paste0(metadata_location,"prev_hashes.csv")
+fastq_location <- "C:/sandbox/for_dada2"
+output_location <- "C:/sandbox/final_data/"
+primer.data <- read.csv("C:/sandbox/metadata/primer_data.csv")
+metadata_location <-"C:/sandbox/metadata/"
+
 
 
 ### check if samples for i'th primer is present -------------------------------------------
@@ -32,11 +33,15 @@ for (i in 1:nrow(primer.data)){
     sample.names <- paste(sample.names1, sample.names2, sep = "_")
 
 
-### find taxonomy database in metadata directory -------------------------------------------
+### find taxonomy databases in metadata directory -------------------------------------------
     taxref <- grep(primer.data$locus_shorthand[i],list.files(path = metadata_location),value=TRUE)
+    find_asv <- grep(primer.data$locus_shorthand[i],list.files(path = paste0(metadata_location,"known_hashes/")),value=TRUE)
     tax_location <- paste0(metadata_location,taxref)
+    identified_hashes <- paste0(metadata_location,find_asv)
     print("Running with Tax Database:")
     print(tax_location)
+    print("Running with ASV Database:")
+    print(identified_hashes)
 
 
 ### vizualize read quality profiles ----------------------------------
@@ -52,43 +57,43 @@ for (i in 1:nrow(primer.data)){
     
     
 ### Find quality trimming length ----------------------------------
-    print(paste0("Calculating quality trimming length...", Sys.time()))
-    n <- 500000
-    trimsF <- c()
-    for(f in fnFs[!is.na(fnFs)]) {
-      srqa <- qa(f, n=n)
-      df <- srqa[["perCycle"]]$quality
-      means <- rowsum(df$Score*df$Count, df$Cycle)/rowsum(df$Count, df$Cycle) #calculate mean qual at each cycle
-      where_to_cut <- min(which(means<30))-1 #trim first time mean qual dips below 30
-      trimsF <- append(where_to_cut, trimsF) 
-    }
-    where_trim_all_Fs <- median(trimsF) #get average of all trims - use this as Trunclen forwards
-    
-    trimsR <- c()
-    for(r in fnRs[!is.na(fnRs)]) {
-      srqa <- qa(r, n=n)
-      df <- srqa[["perCycle"]]$quality
-      # Calculate summary statistics at each position
-      means <- rowsum(df$Score*df$Count, df$Cycle)/rowsum(df$Count, df$Cycle)
-      where_to_cut <- min(which(means<30))-1
-      trimsR <- append(where_to_cut, trimsR)
-    }
-    where_trim_all_Rs <- median(trimsR)
-    #try sliding window rule instead of hard cutoff
-    both_length <- where_trim_all_Fs + where_trim_all_Rs
-    min_length <- primer.data$tapestation_amplicon_length_F[i] + 25
-    if(both_length < min_length){
-      stop("Trim qual too high- not enough overlap. Choose a new Q score.") #if you trim too much, can't overlap
-    }
+     print(paste0("Calculating quality trimming length...", Sys.time()))
+     n <- 500000
+     trimsF <- c()
+     for(f in fnFs[!is.na(fnFs)]) {
+       srqa <- qa(f, n=n)
+       df <- srqa[["perCycle"]]$quality
+       means <- rowsum(df$Score*df$Count, df$Cycle)/rowsum(df$Count, df$Cycle) #calculate mean qual at each cycle
+       where_to_cut <- min(which(means<30))-1 #trim first time mean qual dips below 30
+       trimsF <- append(where_to_cut, trimsF) 
+     }
+     where_trim_all_Fs <- median(trimsF) #get average of all trims - use this as Trunclen forwards
+     
+     trimsR <- c()
+     for(r in fnRs[!is.na(fnRs)]) {
+       srqa <- qa(r, n=n)
+       df <- srqa[["perCycle"]]$quality
+       # Calculate summary statistics at each position
+       means <- rowsum(df$Score*df$Count, df$Cycle)/rowsum(df$Count, df$Cycle)
+       where_to_cut <- min(which(means<30))-1
+       trimsR <- append(where_to_cut, trimsR)
+     }
+     where_trim_all_Rs <- median(trimsR)
+     #try sliding window rule instead of hard cutoff
+     both_length <- where_trim_all_Fs + where_trim_all_Rs
+     min_length <- primer.data$tapestation_amplicon_length_F[i] + 25
+     if(both_length < min_length){
+       stop("Trim qual too high- not enough overlap. Choose a new Q score.") #if you trim too much, can't overlap
+     }
   
     
 ### Filter and Trim ---------------------------------------------------------------
     print(paste0("starting filter and trim", Sys.time()))
     out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, 
                          trimRight = c(primer.data$primer_length_r[i],primer.data$primer_length_f[i]),
-                         truncLen = c(where_trim_all_Fs,where_trim_all_Rs),
+                         truncLen = c(130,130),
                           maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
-                           compress=TRUE, multithread=FALSE)
+                           compress=TRUE, multithread=TRUE)
 
     
 ### Dereplicate ---------------------------------------------------------------
@@ -142,39 +147,63 @@ for (i in 1:nrow(primer.data)){
     Hashes <- map_chr (colnames(seqtab.nochim.df), ~ digest(.x, algo = "sha1", serialize = F, skip = "auto"))
     conv_table <- tibble (Hash = Hashes,
                           Sequence = colnames(seqtab.nochim.df))
-    colnames(seqtab.nochim.df) <- Hashes
     
     write_csv(conv_table, conv_file) # write hash key into a csv
     write.fasta(sequences = as.list(conv_table$Sequence), # write hash key into a fasta
                 names     = as.list(conv_table$Hash),
                 file.out = conv_file.fasta)
     sample.df <- tibble::rownames_to_column(seqtab.nochim.df,"Sample_name")
-    sample.df <- data.frame(append(sample.df,c(Lable='MFU'), after = 1))
-    seqtab.nochim.df <- bind_cols(sample.df %>%
-                                    select(Sample_name, Locus),
+    sample.df <- data.frame(append(sample.df,c(Label=primer.data$locus_shorthand[i]), after = 1))
+    current_asv <- bind_cols(sample.df %>%
+                                    select(Sample_name, Label),
                                   seqtab.nochim.df)
-    current_asv <- seqtab.nochim.df %>%
-      pivot_longer(cols = c(- Sample_name, - Locus),
+    current_asv <- current_asv %>%
+      pivot_longer(cols = c(- Sample_name, - Label),
                    names_to = "Hash",
                    values_to = "nReads") %>%
-      filter(nReads > 0)
+          filter(nReads > 0)
     write_csv(current_asv, ASV_file) # write asv table into a csv
 
 ### Separate out ASVs that have already been classified -----------------------------------------
+    identified_hashes <- read_csv(identified_hashes)
     Hash_key <- read_csv(conv_file)
     Hash <- Hash_key %>% 
       select(Hash, Sequence) %>% 
       distinct()
-    new.set <- anti_join(Hash, previous.good.effort, by = c("Hash" = "representative")) # remove anything previously classified
+    new_hashes_set <- anti_join(Hash, identified_hashes, by = c("Hash" = "Hash")) #re anyjasdfjklasdfjkl;asdfjkhhified
+    already_identified_hashes_set <- inner_join(Hash,identified_hashes,by=c("Hash" = "Hash"))
+    new.seqtab.nochim <- seqtab.nochim.df %>% 
+                          select(new_hashes_set$Sequence) %>% 
+                          as.matrix()
     
-
-### Assign Taxonomy ---------------------------------------------------------------
+### Assign Taxonomy to new ASVs ---------------------------------------------------------------
     print(paste0("Starting Taxonomy Assignment at ", Sys.time()))
-    taxa <- assignTaxonomy(new.set,tax_location, tryRC = TRUE, verbose = TRUE, multithread = TRUE)
+    new_taxa <- assignTaxonomy(new.seqtab.nochim,tax_location, tryRC = TRUE, verbose = TRUE, multithread = TRUE)
+    print(paste0("Finished Taxonomy Assignment at ", Sys.time()," ."))
     
+  
+### Re-join Old and New ASVs --------------------------------------------------------------
+    already_identified_hashes_set <- already_identified_hashes_set %>%
+      select(c(Hash,Sequence,Kingdom,Phylum,Class,Order,Family,Genus,Species)) 
     
+    ready_new_taxa <- new_taxa %>% 
+      as.data.frame() %>%
+      rownames_to_column("Sequence") %>%
+      mutate(Hash = new_hashes_set$Hash) %>%
+      relocate(Hash) 
+    
+    joined_old_new_taxa <- bind_rows(already_identified_hashes_set,ready_new_taxa)
+    
+### If new annotation to species level, add to previous effort -----------------------------------------
+    to_add <- ready_new_taxa %>%
+        filter(is.na(Species) == FALSE) %>%
+        select(c(Hash,Kingdom,Phylum,Class,Order,Family,Genus,Species))
+    updated_identified_hashes <- bind_rows(to_add,identified_hashes)
+        
+        
 ### Save data ---------------------------------------------------------------
-    save(seqtab.nochim, freq.nochim, track, taxref, file = paste0("MURI_primer_test_mastertax_dada2_QAQC_output", primer.data$locus_shorthand[i], ".Rdata", sep = ""))
+    write.csv(updated_identified_hashes,paste0(metadata_location,find_asv)) #write updated ASV database
+    save(seqtab.nochim, freq.nochim, track, joined_old_new_taxa, file = paste0("MURI_primer_test_mastertax_dada2_QAQC_output", primer.data$locus_shorthand[i], ".Rdata", sep = ""))
   }
 }
   
