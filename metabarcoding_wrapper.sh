@@ -3,90 +3,39 @@
 # Metabarcoding Wrapper
 # written by: Alexandria Im
 # This wrapper takes in run you want to run as an input and has an interactive interface that allows you to run the entire pipeline and decide what primers/databases to use for the analysis.
-# USAGE: bash metabarcoding_wrapper.sh 
+# USAGE: bash metabarcoding_wrapper.sh {path to muri_metabarcoding directory} {run name}
 
 # NOTE : NEED TO CHANGE PATHWAYS TO PATHWAYS ON SEDNA. CURRENTLY SET TO DIRECTORY STRUCTURE ON CEG
 
 #################### VARIABLE ASSIGNMENT ####################
-MFU_F="GCCGGTAAAACTCGTGCCAGC"
-MFU_R="CATAGTGGGGTATCTAATCCCAGTTTG"
-DL_F="TCACCCAAAGCTGRARTTCTA"
-DL_R="GCGGGTTGCTGGTTTCACG"
-MV1_F="CGTGCCAGCCACCGCG"
-MV1_R="GGGTATCTAATCCYAGTTTG"
-C16_F="GACGAGAAGACCCTAWTGAGCT"
-C16_R="AAATTACGCTGTTATCCCT"
+RUN_NAME=${2}
+INPUT_DIR=${1}
 
 #################### STEP 0: cd into pipeline directory and move input ####################
-cd ~/Desktop/muri_sandbox/example_data_structure/
-# mv ./fastq_holding_pen/${INPUT_FASTQ} ./raw_fastqs/
+cd ${INPUT_DIR}
 ###############################################################
 
 #################### STEP 1: Use Cutadapt ####################
-echo starting primer and quality trimming... $(date +"%T")
+echo starting primer trimming... $(date +"%T")
 sleep 3
 cd raw_fastqs
-CUTADAPT=$(which cutadapt)
-for i in *R1*
-do
-FILE_PRIM=$(echo ${i} | cut -d - -f 1) #grab primer name at beginning of file name
-FILE_NAME=$(echo ${i} | cut -d _ -f 1,2,3) #grab everything before R1 (aka sample name)
-R1=${i}
-R2=$(echo ${i} | sed 's/R1/R2/g')
-if [[ ${FILE_PRIM} == "MFU" ]]; then
-echo MFU Detected
-${CUTADAPT} -g ${MFU_F} \
-     -G "${MFU_R}" \
-     -o ../for_dada2/${R1} \
-     -p ../for_dada2/${R2} \
-    --discard-untrimmed \
-    -j 0 \
-"${R1}" "${R2}" 1> "../cutadapt_reports/${FILE_NAME}_trim_report.txt"
-elif [[ ${FILE_PRIM} == "DL" ]]; then
-echo DL Detected
-${CUTADAPT} -g ${DL_F} \
-     -G "${DL_R}" \
-     -o ../for_dada2/${R1} \
-     -p ../for_dada2/${R2} \
-    --discard-untrimmed \
-    -j 0 \
-"${R1}" "${R2}" 1> "../cutadapt_reports/${FILE_NAME}_trim_report.txt"
-elif [[ ${FILE_PRIM} == "MV1" ]]; then
-echo MV1 Detected
-${CUTADAPT} -g ${MV1_F} \
-     -G "${MV1_R}" \
-     -o ../for_dada2/${R1} \
-     -p ../for_dada2/${R2} \
-    --discard-untrimmed \
-    -j 0 \
-"${R1}" "${R2}" 1> "../cutadapt_reports/${FILE_NAME}_trim_report.txt"
-elif [[ ${FILE_PRIM} == "C16" ]]; then
-echo MV1 Detected
-${CUTADAPT} -g ${C16_F} \
-     -G "${C16_R}" \
-     -o ../for_dada2/${R1} \
-     -p ../for_dada2/${R2} \
-    --discard-untrimmed \
-    -j 0 \
-"${R1}" "${R2}" 1> "../cutadapt_reports/${FILE_NAME}_trim_report.txt"
+sh ../scripts/primer_trimming.sh
 
-fi
-done
-
-#grabbing important info from cutadapt reports and synthesize in overall_report.txt
-echo starting reports...
+#grabbing important info from cutadapt reports and synthesize in cutadapt_overall_report.txt
+echo starting reports... $(date +"%T")
 cd ../cutadapt_reports
 for i in *
 do 
 FILE_NAME=$(echo ${i} | cut -d . -f 1)
-echo ${FILE_NAME} >> overall_report.txt 
-grep Quality-trimmed $i >> overall_report.txt 
-grep "Reads with adapters" $i >> overall_report.txt 
-grep "Reads written (passing filters):" $i >> overall_report.txt 
+echo ${FILE_NAME} >> cutadapt_overall_report.txt 
+grep Quality-trimmed $i >> cutadapt_overall_report.txt 
+grep "Reads with adapters" $i >> cutadapt_overall_report.txt 
+grep "Reads written (passing filters):" $i >> cutadapt_overall_report.txt 
 done
 
+mv cutadapt_overall_report.txt ../final_data/logs/
 cd ..
-echo finished primer and quality trimming. $(date +"%T")
+echo finished primer trimming. $(date +"%T")
 sleep 3
 
 ###############################################################
@@ -95,7 +44,7 @@ sleep 3
 
 echo starting step 1: dada2 ... $(date +"%T")
 sleep 3
-RScript ./scripts/dada2QAQC.R 
+RScript ./scripts/dada2QAQC.R ./for_dada2/ ./final_data/ ./metadata/ ${RUN_NAME}
 mv ./*.Rdata ./for_more_tax
 echo finished step 1. $(date +"%T")
 sleep 3

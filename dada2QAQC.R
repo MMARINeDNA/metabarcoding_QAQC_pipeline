@@ -8,14 +8,15 @@ library(tidyverse)
 library(seqinr)
 library(ShortRead)
 library(digest)
-library(here)
 
-### read in input files ------------------------------------------------------
-fastq_location <- "C:/sandbox/for_dada2"
-output_location <- "C:/sandbox/final_data/"
-primer.data <- read.csv("C:/sandbox/metadata/primer_data.csv")
-metadata_location <-"C:/sandbox/metadata/"
 
+### read in input files and variables ------------------------------------------------------
+args <- commandArgs(trailingOnly=TRUE)
+fastq_location <- args[1]
+output_location <- args[2]
+metadata_location <- args[3]
+run_name <- args[4]
+primer.data <- read.csv(paste0(metadata_location,"primer_data.csv"))
 
 
 ### check if samples for i'th primer is present -------------------------------------------
@@ -42,11 +43,6 @@ for (i in 1:nrow(primer.data)){
     print(tax_location)
     print("Running with ASV Database:")
     print(identified_hashes)
-
-
-### vizualize read quality profiles ----------------------------------
-#plotQualityProfile(fnFs[1:2])
-#plotQualityProfile(fnRs[1:2])
 
 
 ### Name filtered files in filtered/subdirectory ----------------------------------
@@ -85,16 +81,16 @@ for (i in 1:nrow(primer.data)){
      if(both_length < min_length){
        stop("Trim qual too high- not enough overlap. Choose a new Q score.") #if you trim too much, can't overlap
      }
-  
+    print(paste0("Finished calculating quality trimming length...", Sys.time()))
     
 ### Filter and Trim ---------------------------------------------------------------
-    print(paste0("starting filter and trim", Sys.time()))
+    print(paste0("Starting filter and trim...", Sys.time()))
     out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, 
                          trimRight = c(primer.data$primer_length_r[i],primer.data$primer_length_f[i]),
-                         truncLen = c(130,130),
+                         truncLen = c(where_trim_all_Fs,where_trim_all_Rs),
                           maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
                            compress=TRUE, multithread=TRUE)
-
+    print(paste0("Finished filter and trim.  ", Sys.time()))
     
 ### Dereplicate ---------------------------------------------------------------
     exists <- file.exists(filtFs) & file.exists(filtRs)
@@ -136,9 +132,10 @@ for (i in 1:nrow(primer.data)){
 ### Create Hashing  ---------------------------------------------------------------
     
     # define output files
-    conv_file <- file.path(output_location,"hash_key.csv")
-    conv_file.fasta <- file.path(output_location,"hash_key.fasta")
-    ASV_file <-  file.path(output_location,"ASV_table.csv")
+    conv_file <- file.path(output_location,run_name,"_hash_key.csv")
+    conv_file.fasta <- file.path(output_location,run_name,"_hash_key.fasta")
+    ASV_file <-  file.path(output_location,run_name,"_ASV_table.csv")
+    taxonomy_file <- file.path(output_location,run_name,"_taxonomy_output.csv")
     
     # create ASV table and hash key 
     print(paste0("creating ASV table and hash key...", Sys.time()))
@@ -170,7 +167,7 @@ for (i in 1:nrow(primer.data)){
     Hash <- Hash_key %>% 
       select(Hash, Sequence) %>% 
       distinct()
-    new_hashes_set <- anti_join(Hash, identified_hashes, by = c("Hash" = "Hash")) #re anyjasdfjklasdfjkl;asdfjkhhified
+    new_hashes_set <- anti_join(Hash, identified_hashes, by = c("Hash" = "Hash")) 
     already_identified_hashes_set <- inner_join(Hash,identified_hashes,by=c("Hash" = "Hash"))
     new.seqtab.nochim <- seqtab.nochim.df %>% 
                           select(new_hashes_set$Sequence) %>% 
@@ -202,8 +199,9 @@ for (i in 1:nrow(primer.data)){
         
         
 ### Save data ---------------------------------------------------------------
+    write.csv(joined_old_new_taxa,taxonomy_file) #write taxonomy csv
     write.csv(updated_identified_hashes,paste0(metadata_location,find_asv)) #write updated ASV database
-    save(seqtab.nochim, freq.nochim, track, joined_old_new_taxa, file = paste0("MURI_primer_test_mastertax_dada2_QAQC_output", primer.data$locus_shorthand[i], ".Rdata", sep = ""))
+    save(seqtab.nochim, freq.nochim, track, joined_old_new_taxa, file = paste0(output_location,run_name,"_dada2_output", primer.data$locus_shorthand[i], ".Rdata", sep = ""))
   }
 }
   
