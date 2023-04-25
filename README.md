@@ -1,2 +1,4 @@
 # metabarcoding_QAQC_pipeline
-Pipeline scripts for initial quality control, ASV assignment, taxonomic classification, and preliminary data visualization
+
+This pipeline performs metabarcoding analysis using Cutadapt and DADA2.  The file structure 
+cg

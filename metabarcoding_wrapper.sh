@@ -8,8 +8,8 @@
 # NOTE : NEED TO CHANGE PATHWAYS TO PATHWAYS ON SEDNA. CURRENTLY SET TO DIRECTORY STRUCTURE ON CEG
 
 #################### VARIABLE ASSIGNMENT ####################
-RUN_NAME=${2}
 INPUT_DIR=${1}
+RUN_NAME=${2}
 
 #################### STEP 0: cd into pipeline directory and move input ####################
 cd ${INPUT_DIR}
@@ -48,62 +48,6 @@ RScript ./scripts/dada2QAQC.R ./for_dada2/ ./final_data/ ./metadata/ ${RUN_NAME}
 mv ./*.Rdata ./for_more_tax
 echo finished step 1. $(date +"%T")
 sleep 3
-
-###############################################################
-
-#################### STEP 3: Assign Taxonomy (again) ####################
-
-# echo starting step 2: assigning taxonomy again... $(date +"%T")
-# sleep 2
-# while true; do
-# read -p 'Another round of Taxonomy? (y/n) ' tax_reply
-# if [[ ${tax_reply} == "y" ]]; then
-# cat ./metadata/assignTaxonomy_codes
-# read -p "Enter Ref DB Name: " primer
-
-# # mifish
-# if [[ $primer = "MFU" ]]
-# then
-# RScript ./scripts/assignTaxonomy.R ./metadata/MiFish_12S_0223_dada2.fasta ${primer}
-
-
-# # marver 1
-# elif [[ $primer = "MV1" ]]
-# then
-# RScript ./scripts/assignTaxonomy.R ./metadata/MiFish_12S_0223_dada2.fasta ${primer}
-
-
-# # d-loop
-# elif [[ $primer = "DL" ]]
-# then
-# RScript ./scripts/assignTaxonomy.R ./metadata/cetacean_DL_taxonomy.fasta ${primer}
-
-
-# # C16 
-# elif [[ $primer = "C16" ]]
-# then
-# RScript ./scripts/assignTaxonomy.R ./metadata/ceph_C16_sanger.fasta ${primer}
-
-# # custom database input
-# else 
-# echo "Seems like that isn't a primer we recognize..."
-# read -p 'Input a custom database: ' custom_db
-# read -p 'Primer Name: ' ${p_name}
-# if [ -z ${custom_db} ]
-# then
-# break
-# else 
-# RScript ./scripts/assignTaxonomy.R ${custom_db} ${p_name}
-# fi
-# fi
-
-# else
-# break
-# fi
-# done
-
-# echo finished step 2. $(date +"%T")
-# sleep 3
 
 ###############################################################
 
