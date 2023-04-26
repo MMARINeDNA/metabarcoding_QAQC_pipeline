@@ -1,6 +1,19 @@
 # metabarcoding_QAQC_pipeline
 
-This pipeline performs metabarcoding analysis using Cutadapt and DADA2.  Below is the file system that this pipeline assumes:
+This pipeline performs metabarcoding analysis using Cutadapt and DADA2.  
+
+## Step 1: Pull the Repository
+--- 
+Before running this metabarcoding pipeline, it's important to make sure you have the most updated version of scripts and (more importantly)found ASV databases.  To do this, pull the most recent version of the github repo:
+
+```
+# run from the github repository
+git pull
+```
+## Step 2: Create File System
+---
+
+Below is the file system that this pipeline assumes:
 
 ![Alt text](./data/pictures/file_structure.png?raw=true "Title")
 
@@ -13,5 +26,23 @@ For example, if I wanted to create these files on my desktop, I would run:
 
 ```
 sh config.sh ~/Desktop/
+```
+
+## Step 3: Move Raw Fastq's into raw_fastq
+---
+Copy your raw fastq's into the raw_fastq directory.  A command that would do this would look like:
+
+```
+cp /path/to/fastqs/* /path/to/raw_fastqs
+```
+
+## Step 4: Run metabarcoding_wrapper.sh
+The metabarcoding wrapper takes 2 inputs:
+* path to your file system
+* run name
+
+To run this script, use the following command:
+```
+bash metabarcoding_wrapper.sh {pathway to files} {run name}
 ```
 
