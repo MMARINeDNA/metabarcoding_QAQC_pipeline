@@ -38,7 +38,7 @@ for (i in 1:nrow(primer.data)){
     taxref <- grep(primer.data$locus_shorthand[i],list.files(path = metadata_location),value=TRUE)
     find_asv <- grep(primer.data$locus_shorthand[i],list.files(path = paste0(metadata_location,"known_hashes/")),value=TRUE)
     tax_location <- paste0(metadata_location,taxref)
-    identified_hashes <- paste0(metadata_location,find_asv)
+    identified_hashes <- paste0(metadata_location,"known_hashes/",find_asv)
     print("Running with Tax Database:")
     print(tax_location)
     print("Running with ASV Database:")
@@ -132,10 +132,10 @@ for (i in 1:nrow(primer.data)){
 ### Create Hashing  ---------------------------------------------------------------
     
     # define output files
-    conv_file <- file.path(output_location,run_name,"_hash_key.csv")
-    conv_file.fasta <- file.path(output_location,run_name,"_hash_key.fasta")
-    ASV_file <-  file.path(output_location,run_name,"_ASV_table.csv")
-    taxonomy_file <- file.path(output_location,run_name,"_taxonomy_output.csv")
+    conv_file <- file.path(output_location,paste0(run_name,"_hash_key.csv"))
+    conv_file.fasta <- file.path(output_location,paste0(run_name,"_hash_key.fasta"))
+    ASV_file <-  file.path(output_location,paste0(run_name,"_ASV_table.csv"))
+    taxonomy_file <- file.path(output_location,paste0(run_name,"_taxonomy_output.csv"))
     
     # create ASV table and hash key 
     print(paste0("creating ASV table and hash key...", Sys.time()))
