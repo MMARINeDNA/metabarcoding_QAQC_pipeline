@@ -16,6 +16,11 @@ C18_R="GCACTTAACCGACCGTCGAC"
 CUTADAPT=$(which cutadapt)
 for i in *R1*
 do
+if [[ -z ${i} ]]; then
+echo No Fastq files found!
+exit 1
+fi
+
 FILE_PRIM=$(echo ${i} | cut -d - -f 1) #grab primer name at beginning of file name
 FILE_NAME=$(echo ${i} | cut -d _ -f 1,2,3) #grab everything before R1 (aka sample name)
 R1=${i}
