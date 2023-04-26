@@ -64,34 +64,6 @@ echo metabarcoding pipeline complete! $(date +"%T")
 
 ###############################################################
 
-# TRIALS AND TRIBULATIONS
-# what does truncQ do? how different from cutadapt? what is the scale for scoring (2 is so low???)
-# is it cutadapt lsor dada2 that can't handle I's?
-# 
-
-# TO-DO:
-# change output for assignTax directory IN R CODE
-# do we want it to ask all questions at the beginning of the run? or is it ok to ask when step 2 starts for example?
-# asv/hashing for dada2 step
-# holding pen will be on QNAP and rest will be on SEDNA... need to figure out how to automatically move
-# DBS FOR MIFISH AND MARVER1 WILL BE SAME
-# FINAL RUN USING CORRECT DBS AND FILE STRUCTURE
-# think about hashing for DADA2 because you can then use hash key and annoted hash table to classify already-found hashes (saves time and computation)
-
-
-# DONE:
-# gotta work on WHERE the outputs go and the general directory structure
-# ask again and again to do step 2 until you're done
-# ask if we want to do the assign taxonomy step again
-# ask for multiple inputs
-# for cutadapt, make first step and make sure I's are turned to N's in csv file
-# really gotta change the trimming on DADA2- it's either trimming way too little (for the longer ones), and there's A LOT of varaition run-to-run
-# change for loop in dada2 script to not break when it hits a primer that isn't there
-# enabling inputs for the R scripts
-
-# THINGS TO CHANGE BEFORE HAND-OFF:
-# change script hard-coded paths
-
 
 
 
