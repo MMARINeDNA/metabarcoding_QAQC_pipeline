@@ -133,10 +133,10 @@ for (i in 1:nrow(primer.data)){
 ### Create Hashing  ---------------------------------------------------------------
     
     # define output files
-    conv_file <- file.path(output_location,paste0(run_name,primer.data$locus_shorthand[i],"_hash_key.csv"))
-    conv_file.fasta <- file.path(output_location,paste0(run_name,primer.data$locus_shorthand[i],"_hash_key.fasta"))
-    ASV_file <-  file.path(output_location,paste0(run_name,primer.data$locus_shorthand[i],"_ASV_table.csv"))
-    taxonomy_file <- file.path(output_location,paste0(run_name,primer.data$locus_shorthand[i],"_taxonomy_output.csv"))
+    conv_file <- file.path(output_location,"csv_output/",paste0(run_name,primer.data$locus_shorthand[i],"_hash_key.csv"))
+    conv_file.fasta <- file.path(output_location,"csv_output/",paste0(run_name,primer.data$locus_shorthand[i],"_hash_key.fasta"))
+    ASV_file <-  file.path(output_location,"csv_output/",paste0(run_name,primer.data$locus_shorthand[i],"_ASV_table.csv"))
+    taxonomy_file <- file.path(output_location,"csv_output/",paste0(run_name,primer.data$locus_shorthand[i],"_taxonomy_output.csv"))
     
     # create ASV table and hash key 
     print(paste0("creating ASV table and hash key...", Sys.time()))
@@ -202,7 +202,7 @@ for (i in 1:nrow(primer.data)){
 ### Save data ---------------------------------------------------------------
     write.csv(joined_old_new_taxa,taxonomy_file) #write taxonomy csv
     write.csv(updated_identified_hashes,paste0(metadata_location,find_asv)) #write updated ASV database
-    save(seqtab.nochim, freq.nochim, track, joined_old_new_taxa, file = paste0(output_location,run_name,"_dada2_output", primer.data$locus_shorthand[i], ".Rdata", sep = ""))
+    save(seqtab.nochim, freq.nochim, track, joined_old_new_taxa, file = paste0(output_location,"rdata_output/",run_name,"_dada2_output", primer.data$locus_shorthand[i], ".Rdata", sep = ""))
   }
 }
   
