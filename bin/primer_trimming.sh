@@ -24,8 +24,8 @@ if [[ ${FILE_PRIM} == "MFU" ]]; then
 echo MFU Detected
 ${CUTADAPT} -g ${MFU_F} \
      -G "${MFU_R}" \
-     -o ../for_dada2/${R1} \
-     -p ../for_dada2/${R2} \
+     -o ../raw_fastqs/${R1} \
+     -p ../raw_fastqs/${R2} \
     --discard-untrimmed \
     -j 0 \
 "${R1}" "${R2}" 1> "../cutadapt_reports/${FILE_NAME}_trim_report.txt"
@@ -33,8 +33,8 @@ elif [[ ${FILE_PRIM} == "DL" ]]; then
 echo DL Detected
 ${CUTADAPT} -g ${DL_F} \
      -G "${DL_R}" \
-     -o ../for_dada2/${R1} \
-     -p ../for_dada2/${R2} \
+     -o ../raw_fastqs/${R1} \
+     -p ../raw_fastqs/${R2} \
     --discard-untrimmed \
     -j 0 \
 "${R1}" "${R2}" 1> "../cutadapt_reports/${FILE_NAME}_trim_report.txt"
@@ -42,8 +42,8 @@ elif [[ ${FILE_PRIM} == "MV1" ]]; then
 echo MV1 Detected
 ${CUTADAPT} -g ${MV1_F} \
      -G "${MV1_R}" \
-     -o ../for_dada2/${R1} \
-     -p ../for_dada2/${R2} \
+     -o ../raw_fastqs/${R1} \
+     -p ../raw_fastqs/${R2} \
     --discard-untrimmed \
     -j 0 \
 "${R1}" "${R2}" 1> "../cutadapt_reports/${FILE_NAME}_trim_report.txt"
@@ -51,8 +51,8 @@ elif [[ ${FILE_PRIM} == "C16" ]]; then
 echo C16 Detected
 ${CUTADAPT} -g ${C16_F} \
      -G "${C16_R}" \
-     -o ../for_dada2/${R1} \
-     -p ../for_dada2/${R2} \
+     -o ../raw_fastqs/${R1} \
+     -p ../raw_fastqs/${R2} \
     --discard-untrimmed \
     -j 0 \
 "${R1}" "${R2}" 1> "../cutadapt_reports/${FILE_NAME}_trim_report.txt"
@@ -60,8 +60,8 @@ elif [[ ${FILE_PRIM} == "C18" ]]; then
 echo C18 Detected
 ${CUTADAPT} -g ${C18_F} \
      -G "${C18_R}" \
-     -o ../for_dada2/${R1} \
-     -p ../for_dada2/${R2} \
+     -o ../raw_fastqs/${R1} \
+     -p ../raw_fastqs/${R2} \
     --discard-untrimmed \
     -j 0 \
 "${R1}" "${R2}" 1> "../cutadapt_reports/${FILE_NAME}_trim_report.txt"
