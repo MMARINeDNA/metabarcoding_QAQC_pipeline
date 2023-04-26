@@ -1,4 +1,3 @@
-
 ## dada2 QAQC of MURI primer test sequences
 ## 11/28/2022
 ## written by Amy Van Cise using dada2
@@ -101,6 +100,7 @@ for (i in 1:nrow(primer.data)){
     derepRs <- derepFastq(filtRs, verbose=TRUE)
 
     # Name the derep-class objects by the sample names
+    sample.names <- sample.names[exists]
     names(derepFs) <- sample.names
     names(derepRs) <- sample.names
 
@@ -133,10 +133,10 @@ for (i in 1:nrow(primer.data)){
 ### Create Hashing  ---------------------------------------------------------------
     
     # define output files
-    conv_file <- file.path(output_location,paste0(run_name,"_hash_key.csv"))
-    conv_file.fasta <- file.path(output_location,paste0(run_name,"_hash_key.fasta"))
-    ASV_file <-  file.path(output_location,paste0(run_name,"_ASV_table.csv"))
-    taxonomy_file <- file.path(output_location,paste0(run_name,"_taxonomy_output.csv"))
+    conv_file <- file.path(output_location,paste0(run_name,primer.data$locus_shorthand[i],"_hash_key.csv"))
+    conv_file.fasta <- file.path(output_location,paste0(run_name,primer.data$locus_shorthand[i],"_hash_key.fasta"))
+    ASV_file <-  file.path(output_location,paste0(run_name,primer.data$locus_shorthand[i],"_ASV_table.csv"))
+    taxonomy_file <- file.path(output_location,paste0(run_name,primer.data$locus_shorthand[i],"_taxonomy_output.csv"))
     
     # create ASV table and hash key 
     print(paste0("creating ASV table and hash key...", Sys.time()))
