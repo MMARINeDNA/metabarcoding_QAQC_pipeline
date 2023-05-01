@@ -3,7 +3,6 @@
 PATH_TO_DIR=${1}
 
 echo Configuring file system ... $(date +"%T")
-mkdir ${PATH_TO_DIR}/
 mkdir ${PATH_TO_DIR}/raw_fastqs
 mkdir ${PATH_TO_DIR}/for_dada2
 mkdir ${PATH_TO_DIR}/final_data
