@@ -81,6 +81,12 @@ for (i in 1:nrow(primer.data)){
      if(both_length < min_length){
        stop("Trim qual too high- not enough overlap. Choose a new Q score.") #if you trim too much, can't overlap
      }
+     if(primer.data$locus_shorthand[i] == "DL"){
+      if(tapestation_amplicon_length_F > 280 || tapestation_amplicon_length_R > 280){
+        tapestation_amplicon_length_F <- 280
+        tapestation_amplicon_length_R <- 280
+      }
+     }
     print(paste0("Finished calculating quality trimming length...", Sys.time()))
     
 ### Filter and Trim ---------------------------------------------------------------
