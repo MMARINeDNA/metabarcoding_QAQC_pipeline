@@ -1,1 +1,5 @@
 .DS_Store
+raw_fastqs/
+for_dada2/
+final_data/
+analysis_output/
