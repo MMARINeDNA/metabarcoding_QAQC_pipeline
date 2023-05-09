@@ -12,7 +12,7 @@ Before running this metabarcoding pipeline, it's important to make sure you have
 # run from the cloned github repository
 git pull
 ```
-*Remember that GitHub/Git performs version control. What this means for you is that if you make changes to these files on your local machine and then try to `git pull` again, you will receive a warning or error message, because your files have changes that have not been committee to Git. 
+*Remember that GitHub/Git performs version control. What this means for you is that if you make changes to these files on your local machine and then try to `git pull` again, you will receive a warning or error message, because your files have changes that have not been committed to Git. The easiest way around this is to not change the files you pull from this repo.
 
 ## Step 2: Create File System/Update Files
 ---
