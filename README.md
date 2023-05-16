@@ -35,7 +35,7 @@ sh config.sh ~/Desktop/
 
 ```
 cp ./bin/* {path where to create files}/scripts
-cp -r ./data/* {path where to create files}/metadata
+cp -r ./metadata/* {path where to create files}/metadata
 ```
 
 ## Step 3: Move Raw Fastq's into raw_fastq
