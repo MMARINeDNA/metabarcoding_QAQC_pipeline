@@ -11,7 +11,7 @@ library(digest)
 
 
 ### read in input files and variables ------------------------------------------------------
-args <- commandArgs(trailingOnly=TRUE)
+#args <- commandArgs(trailingOnly=TRUE)
 fastq_location <- args[1]
 output_location <- args[2]
 metadata_location <- args[3]
@@ -95,7 +95,7 @@ for (i in 1:nrow(primer.data)){
                          trimRight = c(primer.data$primer_length_r[i],primer.data$primer_length_f[i]),
                          truncLen = c(where_trim_all_Fs,where_trim_all_Rs),
                           maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
-                           compress=TRUE, multithread=TRUE)
+                           compress=TRUE, multithread=TRUE, matchIDs=TRUE)
     print(paste0("Finished filter and trim.  ", Sys.time()))
     
 ### Dereplicate ---------------------------------------------------------------
@@ -130,10 +130,14 @@ for (i in 1:nrow(primer.data)){
     seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
     freq.nochim <- sum(seqtab.nochim)/sum(seqtab)
 
+### Filter by Size ---------------------------------------------------------------
+    indexes.to.keep <- which(nchar(colnames(seqtab.nochim)) < primer.data$amplicon_length[i])
+    cleaned.seqtab.nochim <- seqtab.nochim[,indexes.to.keep]
+    
 ### Track reads through pipeline ---------------------------------------------------------------
     getN <- function(x) sum(getUniques(x))
-    track <- cbind(out, sapply(dadaFs, getN), sapply(dadaRs, getN), sapply(mergers, getN), rowSums(seqtab.nochim))
-    colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim")
+    track <- cbind(out, sapply(dadaFs, getN), sapply(dadaRs, getN), sapply(mergers, getN), rowSums(seqtab.nochim),rowSums(cleaned.seqtab.nochim))
+    colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim","sizeFiltered")
     rownames(track) <- sample.names
     
 ### Create Hashing  ---------------------------------------------------------------
@@ -146,7 +150,7 @@ for (i in 1:nrow(primer.data)){
     
     # create ASV table and hash key 
     print(paste0("creating ASV table and hash key...", Sys.time()))
-    seqtab.nochim.df <- as.data.frame(seqtab.nochim)
+    seqtab.nochim.df <- as.data.frame(cleaned.seqtab.nochim)
     conv_table <- tibble( Hash = "", Sequence ="")
     Hashes <- map_chr (colnames(seqtab.nochim.df), ~ digest(.x, algo = "sha1", serialize = F, skip = "auto"))
     conv_table <- tibble (Hash = Hashes,
@@ -159,7 +163,7 @@ for (i in 1:nrow(primer.data)){
     sample.df <- tibble::rownames_to_column(seqtab.nochim.df,"Sample_name")
     sample.df <- data.frame(append(sample.df,c(Label=primer.data$locus_shorthand[i]), after = 1))
     current_asv <- bind_cols(sample.df %>%
-                                    select(Sample_name, Label),
+                                    dplyr::select(Sample_name, Label),
                                   seqtab.nochim.df)
     current_asv <- current_asv %>%
       pivot_longer(cols = c(- Sample_name, - Label),
@@ -172,12 +176,12 @@ for (i in 1:nrow(primer.data)){
     identified_hashes <- read_csv(identified_hashes)
     Hash_key <- read_csv(conv_file)
     Hash <- Hash_key %>% 
-      select(Hash, Sequence) %>% 
+      dplyr::select(Hash, Sequence) %>% 
       distinct()
     new_hashes_set <- anti_join(Hash, identified_hashes, by = c("Hash" = "Hash")) 
     already_identified_hashes_set <- inner_join(Hash,identified_hashes,by=c("Hash" = "Hash"))
     new.seqtab.nochim <- seqtab.nochim.df %>% 
-                          select(new_hashes_set$Sequence) %>% 
+      dplyr::select(new_hashes_set$Sequence) %>% 
                           as.matrix()
     
 ### Assign Taxonomy to new ASVs ---------------------------------------------------------------
