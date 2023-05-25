@@ -52,6 +52,14 @@ for (i in 1:nrow(primer.data)){
     names(filtFs) <- sample.names
     names(filtRs) <- sample.names
     
+### Filter out Empty Samples ----------------------------------
+    file.empty <- function(filenames) file.info(filenames)$size == 20
+    empty_files <- file.empty(fnFs) | file.empty(fnRs)
+    fnFs <- fnFs[!empty_files]
+    fnRs <- fnRs[!empty_files]
+    filtFs <- filtFs[!empty_files]
+    filtRs <- filtRs[!empty_files]
+    sample.names <- sample.names[!empty_files]
     
 ### Find quality trimming length ----------------------------------
      print(paste0("Calculating quality trimming length...", Sys.time()))
@@ -94,7 +102,7 @@ for (i in 1:nrow(primer.data)){
     print(paste0("Starting filter and trim...", Sys.time()))
     out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, 
                          trimRight = c(primer.data$primer_length_r[i],primer.data$primer_length_f[i]),
-                         truncLen = c(where_trim_all_Fs,where_trim_all_Rs),
+                         truncLen = c(150,150),
                           maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
                            compress=TRUE, multithread=TRUE, matchIDs=TRUE)
     print(paste0("Finished filter and trim.  ", Sys.time()))
@@ -137,9 +145,10 @@ for (i in 1:nrow(primer.data)){
     
 ### Track reads through pipeline ---------------------------------------------------------------
     getN <- function(x) sum(getUniques(x))
-    track <- cbind(out, sapply(dadaFs, getN), sapply(dadaRs, getN), sapply(mergers, getN), rowSums(seqtab.nochim),rowSums(cleaned.seqtab.nochim))
-    colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim","sizeFiltered")
+    track <- cbind(out[exists,], sapply(dadaFs, getN), sapply(dadaRs, getN), sapply(mergers, getN), rowSums(seqtab.nochim),rowSums(cleaned.seqtab.nochim))
+    colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim","length_filter")
     rownames(track) <- sample.names
+    head(track)
     
 ### Create Hashing  ---------------------------------------------------------------
     
@@ -168,9 +177,14 @@ for (i in 1:nrow(primer.data)){
                                   seqtab.nochim.df)
     current_asv <- current_asv %>%
       pivot_longer(cols = c(- Sample_name, - Label),
-                   names_to = "Hash",
+                   names_to = "Sequence",
                    values_to = "nReads") %>%
           filter(nReads > 0)
+    
+    current_asv <- merge(current_asv,conv_table, by="Sequence") %>%
+      select(-Sequ)
+  
+  
     write_csv(current_asv, ASV_file) # write asv table into a csv
 
 ### Separate out ASVs that have already been classified -----------------------------------------
