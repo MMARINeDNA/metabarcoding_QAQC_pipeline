@@ -34,7 +34,6 @@ for (i in 1:nrow(primer.data)){
     sample.names2 <- sapply(strsplit(basename(fnFs), "_"), `[`, 2)
     sample.names <- paste(sample.names1, sample.names2, sep = "_")
 
-
 ### find taxonomy databases in metadata directory -------------------------------------------
     taxref <- grep(primer.data$locus_shorthand[i],list.files(path = metadata_location),value=TRUE)
     find_asv <- grep(primer.data$locus_shorthand[i],list.files(path = paste0(metadata_location,"known_hashes/")),value=TRUE)
@@ -51,15 +50,23 @@ for (i in 1:nrow(primer.data)){
     filtRs <- file.path(fastq_location, "filtered", paste0(sample.names, "_R_filt.fastq.gz"))
     names(filtFs) <- sample.names
     names(filtRs) <- sample.names
-    
+
 ### Filter out Empty Samples ----------------------------------
+# if we don't filter out empty samples, an error happens during finding qual trimming length
     file.empty <- function(filenames) file.info(filenames)$size == 20
     empty_files <- file.empty(fnFs) | file.empty(fnRs)
     fnFs <- fnFs[!empty_files]
     fnRs <- fnRs[!empty_files]
     filtFs <- filtFs[!empty_files]
     filtRs <- filtRs[!empty_files]
-    sample.names <- sample.names[!empty_files]
+    
+### Plot Quality Scores and Save ----------------------------------
+    png(filename=file.path(output_location,"logs",paste0(run_name,"_",primer.data$locus_shorthand[i],"_forward.png")))
+    plotQualityProfile(fnFs[1:4])
+    dev.off()
+    png(filename=file.path(output_location,"logs",paste0(run_name,"_",primer.data$locus_shorthand[i],"_reverse.png")))
+    plotQualityProfile(fnRs[1:4])
+    dev.off()
     
 ### Find quality trimming length ----------------------------------
      print(paste0("Calculating quality trimming length...", Sys.time()))
@@ -102,7 +109,7 @@ for (i in 1:nrow(primer.data)){
     print(paste0("Starting filter and trim...", Sys.time()))
     out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, 
                          trimRight = c(primer.data$primer_length_r[i],primer.data$primer_length_f[i]),
-                         truncLen = c(150,150),
+                         truncLen = c(125,125),
                           maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
                            compress=TRUE, multithread=TRUE, matchIDs=TRUE)
     print(paste0("Finished filter and trim.  ", Sys.time()))
