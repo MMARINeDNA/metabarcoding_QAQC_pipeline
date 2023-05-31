@@ -74,35 +74,46 @@ for (i in 1:nrow(primer.data)){
      trimsF <- c()
      for(f in fnFs[!is.na(fnFs)]) {
        srqa <- qa(f, n=n)
-       df <- srqa[["perCycle"]]$quality
-       means <- rowsum(df$Score*df$Count, df$Cycle)/rowsum(df$Count, df$Cycle) #calculate mean qual at each cycle
-       where_to_cut <- min(which(means<30))-1 #trim first time mean qual dips below 30
-       trimsF <- append(where_to_cut, trimsF) 
+       df <- srqa[["perCycle"]]$quality # Calculate summary statistics at each position.. takes the longest amount of time
+       means <- rowsum(df$Score*df$Count, df$Cycle)/rowsum(df$Count, df$Cycle) #calculate mean quality at each cycle
+       indexes <- seq(1,length(means),10) #create vector of sliding window (windowsize 10)
+       window_values <- c()
+       for(j in 1:(length(indexes)-1)){
+         window_values[j] <- mean(means[indexes[j]:indexes[j+1]]) #calculate mean qual score in each window and add to window_values vector
+       }
+       where_to_cut <- indexes[min(which(window_values<30))] #trim at first value of the window where mean qual dips below 30
+       trimsF[f] <- where_to_cut
      }
-     where_trim_all_Fs <- median(trimsF) #get average of all trims - use this as Trunclen forwards
+     where_trim_all_Fs <- median(trimsF) #get median of all trims - use this as Trunclen forwards
      
      trimsR <- c()
      for(r in fnRs[!is.na(fnRs)]) {
        srqa <- qa(r, n=n)
        df <- srqa[["perCycle"]]$quality
-       # Calculate summary statistics at each position
        means <- rowsum(df$Score*df$Count, df$Cycle)/rowsum(df$Count, df$Cycle)
-       where_to_cut <- min(which(means<30))-1
-       trimsR <- append(where_to_cut, trimsR)
+       indexes <- seq(1,length(means),10)
+       window_values <- c()
+       for(j in 1:(length(indexes)-1)){
+         window_values[j] <- mean(means[indexes[j]:indexes[j+1]])
+       }
+       where_to_cut <- indexes[min(which(window_values<30))] 
+       trimsR[r] <- where_to_cut
      }
      where_trim_all_Rs <- median(trimsR)
-     #try sliding window rule instead of hard cutoff
+      
+    # check if there's enough overlap
      both_length <- where_trim_all_Fs + where_trim_all_Rs
      min_length <- primer.data$tapestation_amplicon_length_F[i] + 25
      if(both_length < min_length){
-       stop("Trim qual too high- not enough overlap. Choose a new Q score.") #if you trim too much, can't overlap
-     }
-     if(primer.data$locus_shorthand[i] == "DL"){
-      if(where_trim_all_Fs > 280 || where_trim_all_Rs > 280){
-        where_trim_all_Fs <- 280
-        where_trim_all_Rs <- 280
+       stop("Not enough overlap. Choose a new Q score.") #if you trim too much, can't overlap
       }
-     }
+    
+    # check if the trim is too long
+    if(where_trim_all_Fs > primer.data$amplicon_length || where_trim_all_Rs > primer.data$amplicon_length){
+      where_trim_all_Fs <- primer.data$amplicon_length
+      where_trim_all_Rs <- primer.data$amplicon_length
+    }
+     
     print(paste0("Finished calculating quality trimming length...", Sys.time()))
     
 ### Filter and Trim ---------------------------------------------------------------
