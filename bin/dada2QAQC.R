@@ -109,9 +109,9 @@ for (i in 1:nrow(primer.data)){
       }
     
     # check if the trim is too long
-    if(where_trim_all_Fs > primer.data$amplicon_length || where_trim_all_Rs > primer.data$amplicon_length){
-      where_trim_all_Fs <- primer.data$amplicon_length
-      where_trim_all_Rs <- primer.data$amplicon_length
+    if(where_trim_all_Fs > primer.data$max_trim[i] || where_trim_all_Rs > primer.data$max_trim[i]){
+      where_trim_all_Fs <- primer.data$max_trim[i]
+      where_trim_all_Rs <- primer.data$max_trim[i]
     }
      
     print(paste0("Finished calculating quality trimming length...", Sys.time()))
