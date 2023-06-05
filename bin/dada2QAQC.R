@@ -148,7 +148,7 @@ for (i in 1:nrow(primer.data)){
     dadaRs <- dada(derepRs, err=errR, multithread=TRUE)
 
 ### Merge Paired Reads ---------------------------------------------------------------
-    mergers <- mergePairs(dadaFs, derepFs, dadaRs, derepRs, verbose=TRUE)
+    mergers <- mergePairs(dadaFs, derepFs, dadaRs, derepRs, minOverlap = primer.data$overlap[i], verbose=TRUE)
 
 ### Construct sequence table ---------------------------------------------------------------
     seqtab <- makeSequenceTable(mergers)
