@@ -76,12 +76,12 @@ for (i in 1:nrow(primer.data)){
        srqa <- qa(f, n=n)
        df <- srqa[["perCycle"]]$quality # Calculate summary statistics at each position.. takes the longest amount of time
        means <- rowsum(df$Score*df$Count, df$Cycle)/rowsum(df$Count, df$Cycle) #calculate mean quality at each cycle
-       indexes <- seq(1,length(means),10) #create vector of sliding window (windowsize 10)
        window_values <- c()
-       for(j in 1:(length(indexes)-1)){
-         window_values[j] <- mean(means[indexes[j]:indexes[j+1]]) #calculate mean qual score in each window and add to window_values vector
+       window_size <- 10
+       for(j in 1:(length(means)-window_size)){
+         window_values[j] <- mean(means[j:(j+window_size)]) #calculate mean qual score in each window and add to window_values vector
        }
-       where_to_cut <- indexes[min(which(window_values<30))] #trim at first value of the window where mean qual dips below 30
+       where_to_cut <- min(which(window_values<30)) #trim at first value of the window where mean qual dips below 30
        trimsF[f] <- where_to_cut
      }
      where_trim_all_Fs <- median(trimsF) #get median of all trims - use this as Trunclen forwards
@@ -93,10 +93,10 @@ for (i in 1:nrow(primer.data)){
        means <- rowsum(df$Score*df$Count, df$Cycle)/rowsum(df$Count, df$Cycle)
        indexes <- seq(1,length(means),10)
        window_values <- c()
-       for(j in 1:(length(indexes)-1)){
-         window_values[j] <- mean(means[indexes[j]:indexes[j+1]])
+       for(j in 1:(length(means)-window_size)){
+         window_values[j] <- mean(means[j:(j+window_size)]) #calculate mean qual score in each window and add to window_values vector
        }
-       where_to_cut <- indexes[min(which(window_values<30))] 
+       where_to_cut <- min(which(window_values<30))
        trimsR[r] <- where_to_cut
      }
      where_trim_all_Rs <- median(trimsR)
@@ -109,11 +109,12 @@ for (i in 1:nrow(primer.data)){
       }
     
     # check if the trim is too long
-    if(where_trim_all_Fs > primer.data$max_trim[i] || where_trim_all_Rs > primer.data$max_trim[i]){
+    if(where_trim_all_Fs > primer.data$max_trim[i]){
       where_trim_all_Fs <- primer.data$max_trim[i]
-      where_trim_all_Rs <- primer.data$max_trim[i]
     }
-     
+    if(where_trim_all_Rs > primer.data$max_trim[i]){
+       where_trim_all_Rs <- primer.data$max_trim[i]
+    } 
     print(paste0("Finished calculating quality trimming length...", Sys.time()))
     
 ### Filter and Trim ---------------------------------------------------------------
