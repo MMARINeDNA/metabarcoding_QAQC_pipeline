@@ -33,6 +33,7 @@ For example, if I wanted to create these files on my desktop, I would run:
 sh config.sh ~/Desktop/
 ```
 Now, the filesystem is now found at `~/Desktop/muri_metabarcoding`.
+
 **If you already have the filesystem on your system, the following command will copy over the updated files from the github repo to the filesytem**
 
 ```
