@@ -163,7 +163,7 @@ for (i in 1:nrow(primer.data)){
     indexes.to.keep <- which(nchar(colnames(seqtab.nochim)) < primer.data$amplicon_length[i])
     cleaned.seqtab.nochim <- seqtab.nochim[,indexes.to.keep]
     filteredout.seqtab.nochim <- seqtab.nochim[,!indexes.to.keep]
-    write.csv(filteredout.seqtab.nochim,paste0(output_location,"logs","filtered_out_asv.csv"))
+    write.csv(filteredout.seqtab.nochim,paste0(output_location,"logs/","filtered_out_asv.csv"))
     
 ### Track reads through pipeline ---------------------------------------------------------------
     getN <- function(x) sum(getUniques(x))
