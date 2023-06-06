@@ -49,12 +49,12 @@ cp /path/to/fastqs/* /path/to/raw_fastqs
 ## Step 4: Run metabarcoding_wrapper.sh
 ---
 The metabarcoding wrapper takes 2 inputs:
-* path to your file system
+* path to your file system (named muri_metabarcoding)
 * run name
 
 To run this script, use the following command:
 ```
-bash metabarcoding_wrapper.sh {pathway to files} {run name}
+bash metabarcoding_wrapper.sh {pathway to muri_metabarcoding} {run name}
 ```
 
 ## Step 5: Push the updated ASV databases
