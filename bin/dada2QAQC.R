@@ -202,10 +202,9 @@ for (i in 1:nrow(primer.data)){
                    names_to = "Sequence",
                    values_to = "nReads") %>%
           filter(nReads > 0)
-    
     current_asv <- merge(current_asv,conv_table, by="Sequence") %>%
-      select(-Sequ)
-  
+      select(-Sequence) %>%
+      relocate(Hash, .after=Label)
   
     write_csv(current_asv, ASV_file) # write asv table into a csv
 
