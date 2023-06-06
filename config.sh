@@ -3,6 +3,7 @@
 PATH_TO_DIR=${1}
 
 echo Configuring file system ... $(date +"%T")
+mkdir ${PATH_TO_DIR}/muri_metabarcoding/
 mkdir ${PATH_TO_DIR}/muri_metabarcoding/raw_fastqs
 mkdir ${PATH_TO_DIR}/muri_metabarcoding/for_dada2
 mkdir ${PATH_TO_DIR}/muri_metabarcoding/final_data
