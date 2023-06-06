@@ -11,5 +11,9 @@ mkdir ${PATH_TO_DIR}/final_data/rdata_output
 mkdir ${PATH_TO_DIR}/final_data/logs
 mkdir ${PATH_TO_DIR}/analysis_output
 mkdir ${PATH_TO_DIR}/cutadapt_reports
-echo Finished creating file system ... $(date +"%T")
+
+
+echo Copying over necessary files ... $(date +"%T")
+cp  -r ./metadata/* ${PATH_TO_DIR}/metadata
+cp   ./bin/* ${PATH_TO_DIR}/scripts
 echo Config finished! $(date +"%T")
