@@ -19,7 +19,7 @@ git pull
 
 Below is the file system that this pipeline assumes:
 
-<p style="text-align:center;"><img src="./data/pictures/file_structure.png" alt="photo of filesystem" width="500" class="center"/></p>
+<p style="text-align:center;"><img src="./metadata/pictures/file_structure.png" alt="photo of filesystem" width="500" class="center"/></p>
 
 To create this filesystem on your computer, run the following line from the repo directory:
 
