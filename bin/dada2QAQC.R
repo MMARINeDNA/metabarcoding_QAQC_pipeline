@@ -59,6 +59,7 @@ for (i in 1:nrow(primer.data)){
     fnRs <- fnRs[!empty_files]
     filtFs <- filtFs[!empty_files]
     filtRs <- filtRs[!empty_files]
+    sample.names <- sample.names[!empty_files]
     
 ### Plot Quality Scores and Save ----------------------------------
     png(filename=file.path(output_location,"logs",paste0(run_name,"_",primer.data$locus_shorthand[i],"_forward.png")))
