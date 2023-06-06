@@ -24,18 +24,26 @@ Below is the file system that this pipeline assumes:
 To create this filesystem on your computer, run the following line from the repo directory:
 
 ```
-sh config.sh {path where to create files}
+sh config.sh {path where to create muri_metabarcoding}
 ```
+This will create a directory called muri_metabarcoding in the given directory, and the filesystem will be created inside that directory.
 For example, if I wanted to create these files on my desktop, I would run:
 
 ```
 sh config.sh ~/Desktop/
 ```
+Now, the filesystem is now found at `~/Desktop/muri_metabarcoding`.
 **If you already have the filesystem on your system, the following command will copy over the updated files from the github repo to the filesytem**
 
 ```
-cp ./bin/* {path where to create files}/scripts
-cp -r ./metadata/* {path where to create files}/metadata
+cp ./bin/* {pathway to muri_metabarcoding}/scripts
+cp -r ./metadata/* {pathway to muri_metabarcoding}/metadata
+```
+
+For example:
+```
+cp ./bin/*  ~/Desktop/muri_metabarcoding/scripts
+cp -r ./metadata/* ~/Desktop/muri_metabarcoding/metadata
 ```
 
 ## Step 3: Move Raw Fastq's into raw_fastq
@@ -70,7 +78,7 @@ To keep the ASV databases updated, push your updated databases to the github rep
 ```
 # RUN FROM CLONED REPOSITORY
 # copy the updated ASV databases into the repository
-cp {path to filesystem}/metadata/known_hashes/* ./data/known_hashes/
+cp {pathway to muri_metabarcoding}/metadata/known_hashes/* ./data/known_hashes/
 
 # commit and push updated databases
 git add ./data/known_hashes/
