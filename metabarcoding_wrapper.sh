@@ -56,8 +56,8 @@ sleep 3
 cd ./scripts
 quarto render Report_MURI_Module3.qmd --to html
 cd ..
-mv ./scripts/Report_MURI_Module3.Rdata ./scripts/${RUN_NAME}_Report_MURI_Module3.Rdata
-mv ./scripts/${RUN_NAME}_Report_MURI_Module3.Rdata ./final_data/rdata_output/
+mv ./scripts/phyloseq_final.Rdata ./scripts/${RUN_NAME}_phyloseq_final.Rdata
+mv ./scripts/${RUN_NAME}_phyloseq_final.Rdata ./final_data/rdata_output/
 mv ./scripts/*html ./analysis_output/
 echo finished step 3. $(date +"%T")
 sleep 2
