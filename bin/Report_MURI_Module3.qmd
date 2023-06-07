@@ -1,0 +1,418 @@
+---
+title: "Report MURI"
+date: '`r format(Sys.time(), "%d %m %Y")`'
+format: 
+  html: 
+    self-contained: true
+    df-print: paged
+    code-fold: true
+    code-tools: true
+---
+
+```{r libraries, message=FALSE, warning=FALSE}
+library(quarto,warn.conflicts = FALSE)
+library(rmarkdown,warn.conflicts = FALSE)
+library(phyloseq,warn.conflicts = FALSE)
+library(tidyverse,warn.conflicts = FALSE)
+library(pander,warn.conflicts = FALSE)
+library(pandoc,warn.conflicts = FALSE)
+library(ggsci,warn.conflicts = FALSE)
+library(ggplot2,warn.conflicts = FALSE)
+library(dplyr,warn.conflicts = FALSE)
+library(strex,warn.conflicts = FALSE)
+library(sqldf,warn.conflicts = FALSE)
+library(knitr,warn.conflicts = FALSE)
+library(rmdformats,warn.conflicts = FALSE)
+library(data.table,warn.conflicts = FALSE)
+library(filesstrings,warn.conflicts = FALSE)
+
+Sys.setenv(RSTUDIO_PANDOC="/Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools")
+
+```
+
+# Aim
+
+This document reports the results of the metabarcoding data from the MURI project in terms of sequencing performance, detected taxa and some ecological insights of the samples.
+
+### **1. General sampling scheme for the 2023 samples**
+
+Here is a provisional but informative map, the idea is to implement some R code in here to start creating maps for future analyses.
+
+```{r echo=FALSE, fig.cap="Sampling scheme", out.width = '80%', fig.align= "center"}
+knitr::include_graphics(("../metadata/pictures/muri.png"))
+#
+```
+
+### **2. Run performance and filtering summary in terms of read number**
+
+```{r}
+
+output.files <- list.files("../final_data/rdata_output/", full.names = TRUE, pattern = "*.Rdata")
+
+output.list <- list()
+
+for (i in 1:length(output.files)){
+load(output.files,  temp_env <- new.env())
+output.list <- as.list(temp_env)
+}
+rm(temp_env)
+
+track <- data.frame()
+
+for (i in 1:length(output.files)){
+temp.track <- output.list[["track"]]
+track <- rbind(track, temp.track)
+rm(temp.track)
+}
+
+track.sum <- dplyr::summarise_all(as.data.frame(track), sum)
+
+pander::pander(track.sum, big.mark = ",")
+
+```
+
+```{r Load metadata}
+md<-read.csv("../metadata/metadata.csv",header = TRUE, sep=",",skip = 15)
+rownames(md)<-md$Sample_ID
+md <- md[grep("MFU", rownames(md)), ]
+md$depth_class <- with(md, ifelse(depth < 5, 'surface (0 m)', 'depth (50 m)'))
+
+```
+
+```{r ASV table}
+seqtab.nochim <- as.data.frame(output.list[["seqtab.nochim"]])
+seqtab.nochim$Sample_ID <- filesstrings::str_before_nth(rownames(seqtab.nochim),"_",1)
+seqtab.nochim <- dplyr::relocate(seqtab.nochim, Sample_ID)
+rownames(seqtab.nochim)<-seqtab.nochim$Sample_ID
+seqtab.nochim<-seqtab.nochim[,!names(seqtab.nochim) %in% ("Sample_ID")]
+ASV_mat <- as.matrix(t(seqtab.nochim))
+
+```
+
+```{r Taxonomical table}
+taxa <- as.data.frame(output.list[["joined_old_new_taxa"]])
+taxa<-taxa[,-1]
+rownames(taxa)<-taxa$Sequence
+taxa<-as.matrix(taxa[,-1])
+```
+
+```{r Build phyloseq object}
+ASV<-phyloseq::otu_table(ASV_mat, taxa_are_rows = TRUE)
+TAXA<-phyloseq::tax_table(taxa)
+MD<-phyloseq::sample_data(md)
+ps<-phyloseq::phyloseq(ASV,TAXA,MD)
+```
+
+```{r}
+#sample_names(ps)
+#rank_names(ps)
+#sample_variables(ps)
+```
+
+```{r}
+# give asvs shorter names and store their sequences in a separate slot in the phyloseq
+dna <- Biostrings::DNAStringSet(phyloseq::taxa_names(ps))
+names(dna) <- phyloseq::taxa_names(ps)
+ps <- phyloseq::merge_phyloseq(ps, dna)
+phyloseq::taxa_names(ps) <- paste0("ASV", seq(phyloseq::ntaxa(ps)))
+
+# merge asvs by species
+ps.sp <- phyloseq::tax_glom(ps, "Species")
+ps.sp = phyloseq::subset_samples(ps.sp, sampleID != "MFU-positive-control-d1")#Revove positive control sample
+sp.tax <- ps.sp@tax_table@.Data
+```
+
+### **3. Number of replicates per station**
+
+```{r warning=FALSE}
+sdt = data.table(as(sample_data(ps.sp), "data.frame"),
+                   TotalReads = sample_sums(ps.sp), keep.rownames = TRUE)
+
+(pSeqDepth <- ggplot2::ggplot(data = sdt, ggplot2::aes(x = TotalReads, fill = as.factor(depth_class))) +
+  ggplot2::geom_histogram(binwidth = 10000, color = "black", alpha = 0.8) +
+  scale_fill_manual(values = c("grey", "black")) +
+  facet_wrap(~ station) +
+  ggtitle("Replicates per station") +
+  labs(y = "Frequency") +
+  scale_x_log10() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, size = 5),
+        axis.text.y = element_text(vjust = 0.5, size = 5),
+        text = element_text(vjust = 0.5, size = 9)))
+
+```
+
+### **4. Read lengths evaluation**
+
+```{r  warning=FALSE}
+# Calculate sequence lengths
+seq_lengths <- nchar(colnames(seqtab.nochim))
+# Create a histogram plot
+p<-ggplot2::ggplot(data = data.frame(Length = seq_lengths), ggplot2::aes(x = Length)) +
+  ggplot2::geom_histogram(binwidth = 1, fill = "grey", color = "black") +
+  labs(title = "Sequence Lengths",
+       x = "Sequence Length (bp)",
+       y = "Frequency")+
+      geom_text(stat = "count", ggplot2::aes(label = ..count..), vjust = -0.5,size=2)
+p
+```
+
+### **5. Sequencing depth evaluation**
+
+Frequency distribution of the sequencing depths per sample.
+
+```{r Read counts per sample, warning=FALSE}
+(pSeqDepth=ggplot2::ggplot(sdt, ggplot2::aes(TotalReads)) + 
+  ggplot2::geom_histogram(binwidth = 10000, fill = "grey", color = "black") + 
+   ggtitle("Sequencing Depth freq"))
+```
+
+```{r }
+#pSeqDepth + facet_wrap(~station)+
+ # theme(axis.text.x = element_text(angle = 90, vjust = 0.5,size=5),
+  #      axis.text.y = element_text(vjust = 0.5,size=5),
+   #     text = element_text(vjust = 0.5,size=9))+
+     #     ggtitle("Sequencing Depth freq per station")
+```
+
+This graph is informative on the resultant number of replicates per station after dada2.
+
+### **6. ASV evaluation**
+
+Frequency distribution of the sequencing depths per ASV.
+
+```{r warning=FALSE}
+tdt = data.table(tax_table(ps.sp),
+                 TotalCounts = taxa_sums(ps.sp),
+                 asv = phyloseq::taxa_names(ps.sp))
+ggplot2::ggplot(tdt, ggplot2::aes(TotalCounts)) + 
+  ggplot2::geom_histogram(binwidth = 10000, fill = "grey", color = "black") + 
+  ggtitle("ASV sequencing depth")+
+   labs(x = "Number of reads", y = "Number of ASVs")
+```
+
+### 7. ASV accumulation curve
+
+```{r Taxa accumulation curve}
+# taxa cumulative sum
+taxcumsum = tdt[, .N, by = TotalCounts]
+setkey(taxcumsum, TotalCounts)
+taxcumsum[, CumSum := cumsum(N)]
+# Define the plot
+pCumSum = ggplot2::ggplot(taxcumsum, ggplot2::aes(TotalCounts, CumSum)) + 
+  geom_point() +
+  xlab("Read counts") +
+  ylab("Number of ASVs") +
+  ggtitle("ASV accumulation curve")
+pCumSum
+```
+
+### **8. Diversity indices**
+
+Observed ASV's (Chao1) and Simpson.
+
+```{r warning=FALSE}
+pAlpha = plot_richness(ps.sp, x="station",
+                       color = "depth_class",
+                       measures =c("Chao1"))+
+                        theme_linedraw()+
+              theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1,size=7))
+pAlpha
+```
+
+```{r warning=FALSE}
+pAlpha = plot_richness(ps.sp, x="station",
+                       color = "depth_class",
+                       measures =c("Simpson"))+
+                        theme_linedraw()+
+              theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1,size=7))
+pAlpha
+```
+
+### 9. Relative abundances of taxonomic groups
+
+```{r}
+ps.sp.prop <- transform_sample_counts(ps.sp, function(x) x/sum(x))
+```
+
+```{r warning=FALSE}
+gp.ch = subset_taxa(ps.sp.prop, Class == "Actinopteri")
+mdf = psmelt(gp.ch)
+p <- ggplot2::ggplot(mdf, ggplot2::aes(x = station, y = Abundance, fill = Family)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 7),
+        axis.text.y = element_text(vjust = 0.5, hjust = 1, size = 7),
+        legend.title = element_text(size = 8),
+        legend.text = element_text(size = 7),
+        legend.position = "right",
+        legend.key.size = unit(0.5, "cm"))+
+  scale_y_continuous(name="Relative abundance", limits=c(0, 1))+
+   ggtitle("Actinopteri")+
+   ylab("Relative abundance") +
+   xlab("Station")+
+  scale_fill_hue(l = 70, c = 150)
+  
+print(p)
+```
+
+```{r, warning=FALSE}
+gp.ch = subset_taxa(ps.sp.prop, Class == "Chondrichthyes")
+mdf = psmelt(gp.ch)
+p <- ggplot2::ggplot(mdf, ggplot2::aes(x = station, y = Abundance, fill = Species)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 7),
+        axis.text.y = element_text(vjust = 0.5, hjust = 1, size = 7),
+        legend.title = element_text(size = 8),
+        legend.text = element_text(size = 7),
+        legend.position = "right",
+        legend.key.size = unit(0.7, "cm"))+
+      #scale_y_continuous(name="Relative abundance", limits=c(0, 1))+
+     ggtitle("Chondrichthyes")+
+   ylab("Relative abundance") +
+  xlab("Station")+
+  scale_fill_hue(l = 70, c = 150)
+print(p)
+```
+
+```{r warning=FALSE}
+gp.ch = subset_taxa(ps.sp.prop, Order == "Artiodactyla")
+mdf = psmelt(gp.ch)
+p <- ggplot2::ggplot(mdf, ggplot2::aes(x = station, y = Abundance, fill = Family)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 7),
+        axis.text.y = element_text(vjust = 0.5, hjust = 1, size = 7),
+        legend.title = element_text(size = 8),
+        legend.text = element_text(size = 7),
+        legend.position = "right",
+        legend.key.size = unit(0.7, "cm"))+
+  #scale_y_continuous(name="Relative abundance", limits=c(0, 0.5))+
+   ggtitle("Artiodactyla")+
+  # ylab("Relative abundance") +
+   xlab("Station")+
+  scale_fill_hue(l = 70, c = 150)
+print(p)
+```
+
+```{r, warning =FALSE}
+plot_bar(ps.sp.prop, fill="Class") +
+      theme(axis.title=element_text(size = 7),
+        legend.title = element_text(size = 8),
+        axis.text.y = element_text(vjust = 0.5, hjust=1,size = 5),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        legend.text = element_text(size = 7),
+        strip.text.x = element_text(size = 7),
+        legend.position = "right",
+        legend.key.size = unit(0.5, "cm")) +
+  xlab("Station") +
+  facet_wrap(~station,scales = "free_x") +
+  ggtitle("Class (all)")+
+   ylab("Relative abundance") +
+   xlab("Station")+
+  scale_fill_hue(l = 70, c = 150)
+```
+
+```{r Order_prop_barplot, warning=FALSE}
+plot_bar(ps.sp.prop, fill="Order") +
+  theme(axis.title=element_text(size = 7),
+        legend.title = element_text(size = 8),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.text.y = element_text(vjust = 0.5, hjust=1,size = 5),
+        legend.text = element_text(size = 7),
+        legend.key.size = unit(0.3, 'cm'),
+        strip.text.x = element_text(size = 7),
+        legend.position = "right") +
+  xlab("Station") +
+  facet_wrap(~station, scales = "free_x")+
+    ggtitle("Order (all)")+
+   ylab("Relative abundance") +
+   xlab("Station")+
+  scale_fill_hue(l = 70, c = 150)
+```
+
+```{r,  warning=FALSE}
+ps_with_fish <- subset_taxa(ps.sp.prop, Class == "Actinopteri")
+
+plot_bar(ps_with_fish, fill="Genus") +
+  theme(axis.title=element_text(size = 7),
+        legend.title = element_text(size = 8),
+        axis.text.y = element_text(vjust = 0.5, hjust=1,size = 5),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        legend.text = element_text(size = 7),
+        legend.key.size = unit(0.3, 'cm'),
+        strip.text.x = element_text(size = 7),
+        legend.position = "right") +
+  xlab("Station") +
+  facet_wrap(~station, scales = "free_x")+
+    ggtitle("Actinopteri")+
+   ylab("Relative abundance") +
+   xlab("Station")+
+  scale_fill_hue(l = 70, c = 150)
+```
+
+```{r  , warning=FALSE}
+ps_with_mm <- subset_taxa(ps.sp.prop, Family == "Delphinidae" | Family =="Balaenopteridae" | Family == "Eschrichtiidae"| Family == "Phocoenidae")
+
+plot_bar(ps_with_mm, fill="Species") +
+ theme(axis.title=element_text(size = 7),
+        legend.title = element_text(size = 8),
+        axis.text.y = element_text(vjust = 0.5, hjust=1,size = 5),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        legend.text = element_text(size = 7),
+        legend.key.size = unit(0.3, 'cm'),
+        strip.text.x = element_text(size = 7),
+        legend.position = "right") +
+  xlab("Station") +
+  facet_wrap(~station, scales = "free_x")+
+  ggtitle("Marine mammals")+
+  ylab("Relative abundance") +
+  xlab("Station")+
+  scale_fill_hue(l = 70, c = 150)
+```
+
+```{r}
+
+# Create a factor corresponding to the Genera
+#genfac = factor(tax_table(ps)[, "Species"])
+# Tabulate the counts for each genera in each sample
+#gentab = apply(otu_table(ps), MARGIN = 2, function(x) {
+#    tapply(x, INDEX = genfac, FUN = sum, na.rm = FALSE, simplify = TRUE)
+#})
+#gentab
+
+```
+
+### **10. Assigned and Non-assigned taxa**
+
+List of assigned taxa
+
+```{r warnings=FALSE}
+(species <- subset_taxa(ps, !is.na(Species)))
+# Access the taxonomic table in the phyloseq object
+species.taxtable <- as.data.frame(tax_table(species))
+species.taxtable$index <- 1:nrow(species.taxtable)
+species.taxtable %>%  relocate(index)
+# View the taxonomic table
+#knitr::kable(species.taxtable)
+```
+
+### List of non-assigned taxa
+
+```{r warnings=FALSE}
+(na.species <- subset_taxa(ps, is.na(Species)))
+# Access the taxonomic table in the phyloseq object
+na.species.taxtable <- as.data.frame(tax_table(na.species))
+na.species.taxtable$index <- 1:nrow(na.species.taxtable)
+na.species.taxtable %>%  relocate(index)
+# View the taxonomic table
+#knitr::kable(na.species.taxtable)
+```
+
+```{r}
+#| label: data-save
+
+save(ps, ps.sp, ps.sp.prop, file = "Report_MURI_Module3.Rdata")
+
+```
