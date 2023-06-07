@@ -80,7 +80,7 @@ md$depth_class <- with(md, ifelse(depth < 5, 'surface (0 m)', 'depth (50 m)'))
 ```
 
 ```{r ASV table}
-seqtab.nochim <- as.data.frame(output.list[["seqtab.nochim"]])
+seqtab.nochim <- as.data.frame(output.list[["cleaned.seqtab.nochim"]])
 seqtab.nochim$Sample_ID <- filesstrings::str_before_nth(rownames(seqtab.nochim),"_",1)
 seqtab.nochim <- dplyr::relocate(seqtab.nochim, Sample_ID)
 rownames(seqtab.nochim)<-seqtab.nochim$Sample_ID
