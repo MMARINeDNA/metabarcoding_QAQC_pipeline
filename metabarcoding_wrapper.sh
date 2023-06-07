@@ -54,7 +54,7 @@ sleep 3
 echo starting step 3: making the stats file... $(date +"%T")
 sleep 3
 cd ./scripts
-Rscript -e "rmarkdown::render('Report_MURI_Module3.qmd')"
+quarto render Report_MURI_Module3.qmd --to html
 cd ..
 mv ./scripts/Report_MURI_Module3.Rdata ./scripts/${RUN_NAME}_Report_MURI_Module3.Rdata
 mv ./scripts/${RUN_NAME}_Report_MURI_Module3.Rdata ./final_data/rdata_output/
