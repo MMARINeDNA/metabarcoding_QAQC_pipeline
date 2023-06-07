@@ -66,19 +66,13 @@ sleep 3
 echo starting step 3: making the stats file... $(date +"%T")
 sleep 3
 cd ./scripts
-Rscript -e "rmarkdown::render('Primer_test_prelim_report.qmd')"
+quarto render Report_MURI_Module3.qmd --to html
 cd ..
-mv ./scripts/primer_test_phyloseq.Rdata ./final_data/
+mv ./scripts/phyloseq_final.Rdata ./scripts/${RUN_NAME}_phyloseq_final.Rdata
+mv ./scripts/${RUN_NAME}_phyloseq_final.Rdata ./final_data/rdata_output/
 mv ./scripts/*html ./analysis_output/
 echo finished step 3. $(date +"%T")
 sleep 2
 echo metabarcoding pipeline complete! $(date +"%T")
 
 ###############################################################
-
-
-
-
-
-
-
