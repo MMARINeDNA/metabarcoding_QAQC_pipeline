@@ -25,9 +25,6 @@ library(knitr,warn.conflicts = FALSE)
 library(rmdformats,warn.conflicts = FALSE)
 library(data.table,warn.conflicts = FALSE)
 library(filesstrings,warn.conflicts = FALSE)
-
-Sys.setenv(RSTUDIO_PANDOC="/Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools")
-
 ```
 
 # Aim
