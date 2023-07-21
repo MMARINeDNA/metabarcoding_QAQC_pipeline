@@ -19,7 +19,7 @@ cd ${INPUT_DIR}
 echo starting primer trimming... $(date +"%T")
 sleep 3
 cd raw_fastqs
-sh ../scripts/primer_trimming.sh
+bash ../scripts/primer_trimming.sh
 
 #grabbing important info from cutadapt reports and synthesize in cutadapt_overall_report.txt
 echo starting reports... $(date +"%T")
