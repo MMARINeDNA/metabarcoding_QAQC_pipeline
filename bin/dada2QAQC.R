@@ -4,6 +4,10 @@
 ## written by Amy Van Cise using dada2
 
 ## set up working environment -------------------------------------------------------
+# if (!requireNamespace("BiocManager", quietly = TRUE))
+#   install.packages("BiocManager")
+# BiocManager::install("dada2", version = "3.11")
+
 library(dada2)
 library(tidyverse)
 library(seqinr)
@@ -101,15 +105,8 @@ for (i in 1:nrow(primer.data)){
        trimsR[r] <- where_to_cut
      }
      where_trim_all_Rs <- median(trimsR)
-      
-    # check if there's enough overlap
-     both_length <- where_trim_all_Fs + where_trim_all_Rs
-     min_length <- primer.data$tapestation_amplicon_length_F[i] + 25
-     if(both_length < min_length){
-       stop("Not enough overlap. Choose a new Q score.") #if you trim too much, can't overlap
-      }
     
-    # check if the trim is too long
+    # for shorter sequences, check if the trim is too long
     if(where_trim_all_Fs > primer.data$max_trim[i]){
       where_trim_all_Fs <- primer.data$max_trim[i]
     }
@@ -248,7 +245,7 @@ for (i in 1:nrow(primer.data)){
 ### Save data ---------------------------------------------------------------
     write.csv(joined_old_new_taxa,taxonomy_file) #write taxonomy csv
     write.csv(updated_identified_hashes,paste0(metadata_location,"known_hashes/",find_asv)) #write updated ASV database
-    save(cleaned.seqtab.nochim, freq.nochim, track, joined_old_new_taxa, file = paste0(output_location,"rdata_output/",run_name,"_dada2_output", primer.data$locus_shorthand[i], ".Rdata", sep = ""))
+    save(cleaned.seqtab.nochim, freq.nochim, track, joined_old_new_taxa, where_trim_all_Fs, where_trim_all_Rs, file = paste0(output_location,"rdata_output/",run_name,"_dada2_output", primer.data$locus_shorthand[i], ".Rdata", sep = ""))
   }
 }
   
