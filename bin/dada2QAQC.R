@@ -20,7 +20,7 @@ fastq_location <- args[1]
 output_location <- args[2]
 metadata_location <- args[3]
 run_name <- args[4]
-primer.data <- read.csv(paste0(metadata_location,"primer_data.csv"))
+primer.data <- read.csv(paste0(metadata_location,"/primer_data.csv"))
 
 
 ### check if samples for i'th primer is present -------------------------------------------
@@ -38,10 +38,8 @@ for (i in 1:nrow(primer.data)){
     sample.names <- paste(sample.names1, sample.names2, sep = "_")
 
 ### find taxonomy databases in metadata directory -------------------------------------------
-    taxref <- grep(primer.data$locus_shorthand[i],list.files(path = metadata_location),value=TRUE)
-    find_asv <- grep(primer.data$locus_shorthand[i],list.files(path = paste0(metadata_location,"known_hashes/")),value=TRUE)
-    tax_location <- paste0(metadata_location,taxref)
-    identified_hashes <- paste0(metadata_location,"known_hashes/",find_asv)
+    tax_location <- paste0(metadata_location,"/",primer.data$db_name[i])
+    identified_hashes <- paste0(metadata_location,"/known_hashes/",primer.data$known_hashes_name[i])
     print("Running with Tax Database:")
     print(tax_location)
     print("Running with ASV Database:")
@@ -159,7 +157,7 @@ for (i in 1:nrow(primer.data)){
     indexes.to.keep <- which((nchar(colnames(seqtab.nochim)) <= primer.data$max_amplicon_length[i]) & ((nchar(colnames(seqtab.nochim))) >= primer.data$min_amplicon_length[i]))
     cleaned.seqtab.nochim <- seqtab.nochim[,indexes.to.keep]
     filteredout.seqtab.nochim <- seqtab.nochim[,!indexes.to.keep]
-    write.csv(filteredout.seqtab.nochim,paste0(output_location,"logs/","filtered_out_asv.csv"))
+    write.csv(filteredout.seqtab.nochim,paste0(output_location,"/logs/","filtered_out_asv.csv"))
     
 ### Track reads through pipeline ---------------------------------------------------------------
     getN <- function(x) sum(getUniques(x))
@@ -171,10 +169,10 @@ for (i in 1:nrow(primer.data)){
 ### Create Hashing  ---------------------------------------------------------------
     
     # define output files
-    conv_file <- file.path(output_location,"csv_output/",paste0(run_name,"_",primer.data$locus_shorthand[i],"_hash_key.csv"))
-    conv_file.fasta <- file.path(output_location,"csv_output/",paste0(run_name,"_",primer.data$locus_shorthand[i],"_hash_key.fasta"))
-    ASV_file <-  file.path(output_location,"csv_output/",paste0(run_name,"_",primer.data$locus_shorthand[i],"_ASV_table.csv"))
-    taxonomy_file <- file.path(output_location,"csv_output/",paste0(run_name,"_",primer.data$locus_shorthand[i],"_taxonomy_output.csv"))
+    conv_file <- file.path(output_location,"csv_output",paste0(run_name,"_",primer.data$locus_shorthand[i],"_hash_key.csv"))
+    conv_file.fasta <- file.path(output_location,"csv_output",paste0(run_name,"_",primer.data$locus_shorthand[i],"_hash_key.fasta"))
+    ASV_file <-  file.path(output_location,"csv_output",paste0(run_name,"_",primer.data$locus_shorthand[i],"_ASV_table.csv"))
+    taxonomy_file <- file.path(output_location,"csv_output",paste0(run_name,"_",primer.data$locus_shorthand[i],"_taxonomy_output.csv"))
     
     # create ASV table and hash key 
     print(paste0("creating ASV table and hash key...", Sys.time()))
@@ -243,8 +241,8 @@ for (i in 1:nrow(primer.data)){
         
 ### Save data ---------------------------------------------------------------
     write.csv(joined_old_new_taxa,taxonomy_file) #write taxonomy csv
-    write.csv(updated_identified_hashes,paste0(metadata_location,"known_hashes/",find_asv)) #write updated ASV database
-    save(cleaned.seqtab.nochim, freq.nochim, track, joined_old_new_taxa, where_trim_all_Fs, where_trim_all_Rs, file = paste0(output_location,"rdata_output/",run_name,"_dada2_output", primer.data$locus_shorthand[i], ".Rdata", sep = ""))
+    write.csv(updated_identified_hashes,paste0(metadata_location,"/known_hashes/",find_asv)) #write updated ASV database
+    save(cleaned.seqtab.nochim, freq.nochim, track, joined_old_new_taxa, where_trim_all_Fs, where_trim_all_Rs, file = paste0(output_location,"/rdata_output/",run_name,"_dada2_output", primer.data$locus_shorthand[i], ".Rdata", sep = ""))
   }
 }
   
