@@ -44,7 +44,7 @@ sleep 3
 
 echo starting step 1: dada2 ... $(date +"%T")
 sleep 3
-RScript ./scripts/dada2QAQC.R ./for_dada2/ ./final_data/ ./metadata/ ${RUN_NAME}
+RScript ./scripts/dada2QAQC.R ./for_dada2 ./final_data ./metadata ${RUN_NAME}
 echo finished step 1. $(date +"%T")
 sleep 3
 
