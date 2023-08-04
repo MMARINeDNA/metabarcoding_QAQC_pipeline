@@ -3,10 +3,6 @@
 ## written by Amy Van Cise using dada2
 
 ## set up working environment -------------------------------------------------------
-# if (!requireNamespace("BiocManager", quietly = TRUE))
-#   install.packages("BiocManager")
-# BiocManager::install("dada2", version = "3.11")
-
 library(dada2)
 library(tidyverse)
 library(seqinr)
@@ -83,7 +79,7 @@ for (i in 1:nrow(primer.data)){
        for(j in 1:(length(means)-window_size)){
          window_values[j] <- mean(means[j:(j+window_size)]) #calculate mean qual score in each window and add to window_values vector
        }
-       where_to_cut <- min(which(window_values<30)) #trim at first value of the window where mean qual dips below 30
+       where_to_cut <- min(which(window_values < primer.data$F_qual[i])) #trim at first value of the window where mean qual dips below 30
        trimsF[f] <- where_to_cut
      }
      where_trim_all_Fs <- median(trimsF) #get median of all trims - use this as Trunclen forwards
@@ -98,7 +94,7 @@ for (i in 1:nrow(primer.data)){
        for(j in 1:(length(means)-window_size)){
          window_values[j] <- mean(means[j:(j+window_size)]) #calculate mean qual score in each window and add to window_values vector
        }
-       where_to_cut <- min(which(window_values<30))
+       where_to_cut <- min(which(window_values < primer.data$R_qual[i]))
        trimsR[r] <- where_to_cut
      }
      where_trim_all_Rs <- median(trimsR)
@@ -173,6 +169,7 @@ for (i in 1:nrow(primer.data)){
     conv_file.fasta <- file.path(output_location,"csv_output",paste0(run_name,"_",primer.data$locus_shorthand[i],"_hash_key.fasta"))
     ASV_file <-  file.path(output_location,"csv_output",paste0(run_name,"_",primer.data$locus_shorthand[i],"_ASV_table.csv"))
     taxonomy_file <- file.path(output_location,"csv_output",paste0(run_name,"_",primer.data$locus_shorthand[i],"_taxonomy_output.csv"))
+    bootstrap_file <- file.path(output_location,"logs",paste0(run_name,"_",primer.data$locus_shorthand[i],"_tax_bootstrap.csv"))
     
     # create ASV table and hash key 
     print(paste0("creating ASV table and hash key...", Sys.time()))
@@ -216,7 +213,7 @@ for (i in 1:nrow(primer.data)){
     
 ### Assign Taxonomy to new ASVs ---------------------------------------------------------------
     print(paste0("Starting Taxonomy Assignment at ", Sys.time()))
-    new_taxa <- assignTaxonomy(new.seqtab.nochim,tax_location, tryRC = TRUE, verbose = TRUE, multithread = TRUE)
+    new_taxa <- assignTaxonomy(new.seqtab.nochim,tax_location, tryRC = TRUE, verbose = TRUE, multithread = TRUE, outputBootstraps = TRUE, minBoot = 98)
     print(paste0("Finished Taxonomy Assignment at ", Sys.time()," ."))
     
   
@@ -224,25 +221,32 @@ for (i in 1:nrow(primer.data)){
     already_identified_hashes_set <- already_identified_hashes_set %>%
       select(c(Hash,Sequence,Kingdom,Phylum,Class,Order,Family,Genus,Species)) 
     
+    lookup <- c(tax.Kingdom = "Kingdom", tax.Phylum = "Phylum", tax.Class = "Class", tax.Order = "Order", tax.Family = "Family", tax.Genus = "Genus", tax.Species = "Species")
     ready_new_taxa <- new_taxa %>% 
       as.data.frame() %>%
       rownames_to_column("Sequence") %>%
       mutate(Hash = new_hashes_set$Hash) %>%
-      relocate(Hash) 
+      relocate(Hash) %>%
+      rename(all_of(lookup))
+      
     
-    joined_old_new_taxa <- bind_rows(already_identified_hashes_set,ready_new_taxa)
+    joined_old_new_taxa <- bind_rows(already_identified_hashes_set,ready_new_taxa) %>%
+      select(c(Hash,Sequence,Kingdom,Phylum,Class,Order,Family,Genus,Species)) 
+    
     
 ### If new annotation to species level, add to previous effort -----------------------------------------
+# adds only if to species level + 100% bootstrap confidence
     to_add <- ready_new_taxa %>%
-        filter(is.na(Species) == FALSE) %>%
+        filter((is.na(Species) == FALSE) & (boot.Species == 100)) %>% 
         select(c(Hash,Kingdom,Phylum,Class,Order,Family,Genus,Species))
     updated_identified_hashes <- bind_rows(to_add,identified_hashes)
         
         
 ### Save data ---------------------------------------------------------------
     write.csv(joined_old_new_taxa,taxonomy_file) #write taxonomy csv
-    write.csv(updated_identified_hashes,paste0(metadata_location,"/known_hashes/",primer.data$known_hashes_name[i])) #write updated ASV database
-    save(cleaned.seqtab.nochim, freq.nochim, track, joined_old_new_taxa, where_trim_all_Fs, where_trim_all_Rs, file = paste0(output_location,"/rdata_output/",run_name,"_dada2_output", primer.data$locus_shorthand[i], ".Rdata", sep = ""))
+    write.csv(ready_new_taxa,bootstrap_file) #write bootstrap csv
+    write.csv(updated_identified_hashes,paste0(metadata_location,"/known_hashes/",primer.data$known_hashes_name[i])) #write updated known ASV database
+    save(cleaned.seqtab.nochim, freq.nochim, track, joined_old_new_taxa, where_trim_all_Fs, where_trim_all_Rs, file = paste0(output_location,"/rdata_output/",run_name,"_dada2_output", primer.data$locus_shorthand[i], ".Rdata", sep = "")) #write RData object 
   }
 }
   
