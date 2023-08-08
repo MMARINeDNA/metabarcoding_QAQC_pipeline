@@ -69,7 +69,13 @@ pander::pander(track.sum, big.mark = ",")
 ```
 
 ```{r Load metadata}
-md<-read.csv("../metadata/metadata.csv",header = TRUE, sep=",",skip = 15)
+miseq_sheet <- read.csv("../metadata/SampleSheetUsed.csv",header = TRUE, sep=",",skip = 19)
+sample_metadata <- read.csv("../metadata/Hake_2019_metadata.csv",row.names = NULL)
+
+miseq_sheet$sampleID <- paste0(sapply(strsplit(miseq_sheet$Sample_ID, "-"),`[`, 2),"-",sapply(strsplit(miseq_sheet$Sample_ID, "-"),`[`, 3))
+print(miseq_sheet$sampleID)
+
+md<- merge(x = miseq_sheet, y = sample_metadata, by="sampleID", all.x = TRUE)
 rownames(md)<-md$Sample_ID
 md <- md[grep("MFU", rownames(md)), ]
 md$depth_class <- with(md, ifelse(depth < 5, 'surface (0 m)', 'depth (50 m)'))
