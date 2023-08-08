@@ -246,7 +246,7 @@ for (i in 1:nrow(primer.data)){
     write.csv(joined_old_new_taxa,taxonomy_file) #write taxonomy csv
     write.csv(ready_new_taxa,bootstrap_file) #write bootstrap csv
     write.csv(updated_identified_hashes,paste0(metadata_location,"/known_hashes/",primer.data$known_hashes_name[i])) #write updated known ASV database
-    save(cleaned.seqtab.nochim, freq.nochim, track, joined_old_new_taxa, where_trim_all_Fs, where_trim_all_Rs, file = paste0(output_location,"/rdata_output/",run_name,"_dada2_output", primer.data$locus_shorthand[i], ".Rdata", sep = "")) #write RData object 
+    save(cleaned.seqtab.nochim, freq.nochim, track, joined_old_new_taxa, where_trim_all_Fs, where_trim_all_Rs, file = paste0(output_location,"/rdata_output/",run_name,"_dada2_output_", primer.data$locus_shorthand[i], ".Rdata", sep = "")) #write RData object 
   }
 }
   
