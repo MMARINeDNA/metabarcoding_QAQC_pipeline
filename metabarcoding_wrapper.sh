@@ -53,12 +53,15 @@ sleep 3
 #################### STEP 4: Generate Report ####################
 echo starting step 3: making the stats file... $(date +"%T")
 sleep 3
+list_markers=$(ls ./final_data/rdata_output | cut -d _ -f 5 | cut -d . -f 1 | uniq)
 cd ./scripts
-quarto render Report_MURI_Module3.qmd --to html
+for marker in ${list_markers}
+do
+quarto render Report_MURI_Module3.qmd -P marker:${marker} --to html 
+mv ./phyloseq_final.Rdata ../final_data/rdata_output/${RUN_NAME}_${marker}_phyloseq_final.Rdata
+mv ./Report_MURI_Module3.html ../analysis_output/${RUN_NAME}_${marker}_Report_MURI_Module3.html
+done
 cd ..
-mv ./scripts/phyloseq_final.Rdata ./scripts/${RUN_NAME}_phyloseq_final.Rdata
-mv ./scripts/${RUN_NAME}_phyloseq_final.Rdata ./final_data/rdata_output/
-mv ./scripts/*html ./analysis_output/
 echo finished step 3. $(date +"%T")
 sleep 2
 echo metabarcoding pipeline complete! $(date +"%T")
