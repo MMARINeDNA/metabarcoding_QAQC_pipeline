@@ -78,7 +78,7 @@ miseq_sheet$sampleID <- paste0(sapply(strsplit(miseq_sheet$Sample_ID, "-"),`[`, 
 
 md<- merge(x = miseq_sheet, y = sample_metadata, by="sampleID", all.x = TRUE)
 rownames(md)<-md$Sample_ID
-md <- md[grep("DL", rownames(md)), ]
+md <- md[grep(params$marker, rownames(md)), ]
 md$depth_class <- with(md, ifelse(depth < 5, 'surface (0 m)', 'depth (50 m)'))
 
 ```
