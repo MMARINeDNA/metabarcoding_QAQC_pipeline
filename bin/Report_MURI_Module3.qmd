@@ -7,6 +7,8 @@ format:
     df-print: paged
     code-fold: true
     code-tools: true
+params:
+  marker:
 ---
 
 ```{r libraries, message=FALSE, warning=FALSE}
@@ -73,11 +75,10 @@ miseq_sheet <- read.csv("../metadata/SampleSheetUsed.csv",header = TRUE, sep=","
 sample_metadata <- read.csv("../metadata/Hake_2019_metadata.csv",row.names = NULL)
 
 miseq_sheet$sampleID <- paste0(sapply(strsplit(miseq_sheet$Sample_ID, "-"),`[`, 2),"-",sapply(strsplit(miseq_sheet$Sample_ID, "-"),`[`, 3))
-print(miseq_sheet$sampleID)
 
 md<- merge(x = miseq_sheet, y = sample_metadata, by="sampleID", all.x = TRUE)
 rownames(md)<-md$Sample_ID
-md <- md[grep("MFU", rownames(md)), ]
+md <- md[grep("DL", rownames(md)), ]
 md$depth_class <- with(md, ifelse(depth < 5, 'surface (0 m)', 'depth (50 m)'))
 
 ```
@@ -121,7 +122,7 @@ phyloseq::taxa_names(ps) <- paste0("ASV", seq(phyloseq::ntaxa(ps)))
 
 # merge asvs by species
 ps.sp <- phyloseq::tax_glom(ps, "Species")
-ps.sp = phyloseq::subset_samples(ps.sp, sampleID != "MFU-positive-control-d1")#Revove positive control sample
+ps.sp <- phyloseq::subset_samples(ps.sp,!grepl("positive",sampleID))#Revove positive control sample
 sp.tax <- ps.sp@tax_table@.Data
 ```
 
@@ -416,6 +417,6 @@ na.species.taxtable %>%  relocate(index)
 ```{r}
 #| label: data-save
 
-save(ps, ps.sp, ps.sp.prop, file = "phyloseq_final.Rdata")
+save(ps, ps.sp, ps.sp.prop, file = "./phyloseq_final.Rdata")
 
 ```
