@@ -54,10 +54,10 @@ sleep 3
 echo starting step 3: making the stats file... $(date +"%T")
 sleep 3
 list_markers=$(ls ./final_data/rdata_output | cut -d _ -f 5 | cut -d . -f 1 | uniq)
-cd ./scripts
 for marker in ${list_markers}
 do
-quarto render Report_MURI_Module3.qmd -P marker:${marker} --to html 
+echo primer: ${marker} detected.  Rendering qmd and phyloseq Rdata
+quarto render ./scripts/Report_MURI_Module3.qmd -P marker:${marker} -P working_dir:$(pwd) --to html 
 mv ./phyloseq_final.Rdata ../final_data/rdata_output/${RUN_NAME}_${marker}_phyloseq_final.Rdata
 mv ./Report_MURI_Module3.html ../analysis_output/${RUN_NAME}_${marker}_Report_MURI_Module3.html
 done
