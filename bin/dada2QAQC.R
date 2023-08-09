@@ -23,7 +23,7 @@ primer.data <- read.csv(paste0(metadata_location,"/primer_data.csv"))
 for (i in 1:nrow(primer.data)){
   check <- grep(primer.data$locus_shorthand[i], sort(list.files(fastq_location, pattern="_R1_001.fastq", full.names = TRUE)), value = TRUE) 
   if(length(check) > 0){
-    print(check)
+    
     
     
 ### read fastq files in working directory -------------------------------------------
