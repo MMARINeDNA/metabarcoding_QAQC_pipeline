@@ -238,7 +238,7 @@ pAlpha
 ps.sp.prop <- transform_sample_counts(ps.sp, function(x) x/sum(x))
 ```
 
-```{r warning=FALSE}
+```{r warning=FALSE,eval=FALSE}
 gp.ch = subset_taxa(ps.sp.prop, Class == "Actinopteri")
 mdf = psmelt(gp.ch)
 p <- ggplot2::ggplot(mdf, ggplot2::aes(x = station, y = Abundance, fill = Family)) +
@@ -258,7 +258,7 @@ p <- ggplot2::ggplot(mdf, ggplot2::aes(x = station, y = Abundance, fill = Family
 print(p)
 ```
 
-```{r, warning=FALSE}
+```{r, warning=FALSE,eval=FALSE}
 gp.ch = subset_taxa(ps.sp.prop, Class == "Chondrichthyes")
 mdf = psmelt(gp.ch)
 p <- ggplot2::ggplot(mdf, ggplot2::aes(x = station, y = Abundance, fill = Species)) +
@@ -277,7 +277,7 @@ p <- ggplot2::ggplot(mdf, ggplot2::aes(x = station, y = Abundance, fill = Specie
 print(p)
 ```
 
-```{r warning=FALSE}
+```{r warning=FALSE,eval=FALSE}
 gp.ch = subset_taxa(ps.sp.prop, Order == "Artiodactyla")
 mdf = psmelt(gp.ch)
 p <- ggplot2::ggplot(mdf, ggplot2::aes(x = station, y = Abundance, fill = Family)) +
@@ -296,7 +296,7 @@ p <- ggplot2::ggplot(mdf, ggplot2::aes(x = station, y = Abundance, fill = Family
 print(p)
 ```
 
-```{r, warning =FALSE}
+```{r, warning =FALSE,eval=FALSE}
 plot_bar(ps.sp.prop, fill="Class") +
       theme(axis.title=element_text(size = 7),
         legend.title = element_text(size = 8),
@@ -315,7 +315,7 @@ plot_bar(ps.sp.prop, fill="Class") +
   scale_fill_hue(l = 70, c = 150)
 ```
 
-```{r Order_prop_barplot, warning=FALSE}
+```{r Order_prop_barplot, warning=FALSE,eval=FALSE}
 plot_bar(ps.sp.prop, fill="Order") +
   theme(axis.title=element_text(size = 7),
         legend.title = element_text(size = 8),
@@ -334,7 +334,7 @@ plot_bar(ps.sp.prop, fill="Order") +
   scale_fill_hue(l = 70, c = 150)
 ```
 
-```{r,  warning=FALSE}
+```{r,  warning=FALSE,eval=FALSE}
 ps_with_fish <- subset_taxa(ps.sp.prop, Class == "Actinopteri")
 
 plot_bar(ps_with_fish, fill="Genus") +
@@ -355,7 +355,7 @@ plot_bar(ps_with_fish, fill="Genus") +
   scale_fill_hue(l = 70, c = 150)
 ```
 
-```{r  , warning=FALSE}
+```{r  , warning=FALSE,eval=FALSE}
 ps_with_mm <- subset_taxa(ps.sp.prop, Family == "Delphinidae" | Family =="Balaenopteridae" | Family == "Eschrichtiidae"| Family == "Phocoenidae")
 
 plot_bar(ps_with_mm, fill="Species") +
