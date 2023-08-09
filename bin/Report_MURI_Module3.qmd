@@ -9,6 +9,7 @@ format:
     code-tools: true
 params:
   marker: "primer missing"
+  working_dir: "path input missing"
 ---
 
 ```{r libraries, message=FALSE, warning=FALSE}
@@ -38,15 +39,14 @@ This document reports the results of the metabarcoding data from the MURI projec
 Here is a provisional but informative map, the idea is to implement some R code in here to start creating maps for future analyses.
 
 ```{r echo=FALSE, fig.cap="Sampling scheme", out.width = '80%', fig.align= "center"}
-knitr::include_graphics(("../metadata/pictures/muri.png"))
-#
+knitr::include_graphics(paste0(params$working_dir,("/metadata/pictures/muri.png")))
+
 ```
 
 ### **2. Run performance and filtering summary in terms of read number**
 
 ```{r}
-
-output.files <- list.files("../final_data/rdata_output/", full.names = TRUE, pattern = "*.Rdata")
+output.files <- list.files(paste0(params$working_dir,"/final_data/rdata_output/"), full.names = TRUE, pattern = paste(params$marker,"*.Rdata"))
 
 output.list <- list()
 
@@ -71,8 +71,8 @@ pander::pander(track.sum, big.mark = ",")
 ```
 
 ```{r Load metadata}
-miseq_sheet <- read.csv("../metadata/SampleSheetUsed.csv",header = TRUE, sep=",",skip = 19)
-sample_metadata <- read.csv("../metadata/Hake_2019_metadata.csv",row.names = NULL)
+miseq_sheet <- read.csv(paste0(params$working_dir,"/metadata/SampleSheetUsed.csv"),header = TRUE, sep=",",skip = 19)
+sample_metadata <- read.csv(paste0(params$working_dir,"/metadata/Hake_2019_metadata.csv"),row.names = NULL)
 
 miseq_sheet$sampleID <- paste0(sapply(strsplit(miseq_sheet$Sample_ID, "-"),`[`, 2),"-",sapply(strsplit(miseq_sheet$Sample_ID, "-"),`[`, 3))
 
