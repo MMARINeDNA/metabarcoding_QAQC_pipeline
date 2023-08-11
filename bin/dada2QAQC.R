@@ -60,10 +60,10 @@ for (i in 1:nrow(primer.data)){
     
 ### Plot Quality Scores and Save ----------------------------------
     png(filename=file.path(output_location,"logs",paste0(run_name,"_",primer.data$locus_shorthand[i],"_forward.png")))
-    plotQualityProfile(fnFs[1:4])
+    plotQualityProfile(fnFs)
     dev.off()
     png(filename=file.path(output_location,"logs",paste0(run_name,"_",primer.data$locus_shorthand[i],"_reverse.png")))
-    plotQualityProfile(fnRs[1:4])
+    plotQualityProfile(fnRs)
     dev.off()
     
 ### Find quality trimming length ----------------------------------
