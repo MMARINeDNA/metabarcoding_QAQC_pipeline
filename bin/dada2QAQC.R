@@ -99,7 +99,7 @@ for (i in 1:nrow(primer.data)){
      }
      where_trim_all_Rs <- median(trimsR)
     
-    # for shorter sequences, check if the trim is too long
+    # Trim to max_trim value if the obtaided length is greater that max_trim
     if(where_trim_all_Fs > primer.data$max_trim[i]){
       where_trim_all_Fs <- primer.data$max_trim[i]
     }
