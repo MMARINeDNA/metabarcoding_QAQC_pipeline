@@ -47,12 +47,16 @@ cp ./bin/*  ~/Desktop/muri_metabarcoding/scripts
 cp -r ./metadata/* ~/Desktop/muri_metabarcoding/metadata
 ```
 
-## Step 3: Move Raw Fastq's into raw_fastq
+## Step 3: Move Raw Fastq's into raw_fastq and Sample Sheet to metadata
 ---
 Copy your raw fastq's into the raw_fastq directory.  A command that would do this would look like:
 
 ```
-cp /path/to/fastqs/* /path/to/raw_fastqs
+cp /path/to/fastqs/* /path/to/muri_metabarcoding/raw_fastqs
+```
+Then, copy your Miseq Sample Sheet (which is produced after Illumina sequencing) to the metadata file.
+```
+cp /path/to/SampleSheetUsed.csv /path/to/muri_metabarcoding/metadata
 ```
 
 ## Step 4: Run metabarcoding_wrapper.sh
