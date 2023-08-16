@@ -46,7 +46,7 @@ knitr::include_graphics(paste0(params$working_dir,("/metadata/pictures/muri.png"
 ### **2. Run performance and filtering summary in terms of read number**
 
 ```{r}
-output.files <- list.files(paste0(params$working_dir,"/final_data/rdata_output/"), full.names = TRUE, pattern = paste(params$marker,"*.Rdata"))
+output.files <- list.files(paste0(params$working_dir,"/final_data/rdata_output"), full.names = TRUE, pattern = paste(params$marker,"*.Rdata"))
 
 output.list <- list()
 
@@ -122,7 +122,6 @@ phyloseq::taxa_names(ps) <- paste0("ASV", seq(phyloseq::ntaxa(ps)))
 
 # merge asvs by species
 ps.sp <- phyloseq::tax_glom(ps, "Species")
-ps.sp <- phyloseq::subset_samples(ps.sp,!grepl("positive",sampleID))#Revove positive control sample
 sp.tax <- ps.sp@tax_table@.Data
 ```
 

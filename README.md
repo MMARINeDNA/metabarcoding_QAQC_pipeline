@@ -58,7 +58,6 @@ Then, copy your Miseq Sample Sheet (which is produced after Illumina sequencing)
 ```
 cp /path/to/SampleSheetUsed.csv /path/to/muri_metabarcoding/metadata
 ```
-<div class="step4"></div>
 
 ## Step 4: Run metabarcoding_wrapper.sh 
 ---
