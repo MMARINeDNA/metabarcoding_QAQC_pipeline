@@ -2,18 +2,18 @@
 
 This pipeline performs metabarcoding analysis using Cutadapt and DADA2. For more information on usage and dependencies, visit the wiki: https://github.com/MMARINeDNA/metabarcoding_QAQC_pipeline/wiki
 
-### Table of Contents:
-<a href="https://github.com/MMARINeDNA/metabarcoding_QAQC_pipeline/wiki/Dependencies">Dependencies</a> <br>
-<a href="https://github.com/MMARINeDNA/metabarcoding_QAQC_pipeline/wiki/Preparing-Your-Data">Preparing Your Data</a><br>
-<a href="https://github.com/MMARINeDNA/metabarcoding_QAQC_pipeline/wiki/Docker-&-Singularity-Image">Docker/Singularity Image</a><br>
-<a href="https://github.com/MMARINeDNA/metabarcoding_QAQC_pipeline/wiki/Dada2-Documentation">DADA2 Script Documentation</a><br>
-<a href="https://github.com/MMARINeDNA/metabarcoding_QAQC_pipeline/wiki/I'm-Using-New-Primers:-A-Guide">I'm Using New Primers: A Guide</a> (under construction)<br>
-<a href="https://github.com/MMARINeDNA/metabarcoding_QAQC_pipeline/wiki/Metadata">Metadata</a> (under construction)<br>
-<a href="https://github.com/MMARINeDNA/metabarcoding_QAQC_pipeline/wiki/Outputs">Outputs</a> (under construction)<br>
+# Overview of Pipeline steps
 
 <p align="center">
 <img src="https://github.com/MMARINeDNA/metabarcoding_QAQC_pipeline/blob/main/metadata/pictures/flowchart.png" alt="photo of metadata pipeline" width="400" class="center"/>
 </p>
+
+Short description of the steps in the figure goes here. 
+Step 1: Gather input data and metadata and put it in the appropriate folders (see step 3 in "Getting started" for more information on how to do this).
+Step 2: Trim primers using cutadapt - this is the first bit of code in the pipeline
+Step 3: 
+Step 4: 
+Step 5: 
 
 # Getting Started:
 
