@@ -23,18 +23,16 @@ bash ../scripts/primer_trimming.sh
 
 #grabbing important info from cutadapt reports and synthesize in cutadapt_overall_report.txt
 echo starting reports... $(date +"%T")
-cd ../cutadapt_reports
+cd ../final_data/logs/cutadapt_reports
 for i in *
 do 
 FILE_NAME=$(echo ${i} | cut -d . -f 1)
 echo ${FILE_NAME} >> cutadapt_overall_report.txt 
-grep Quality-trimmed $i >> cutadapt_overall_report.txt 
-grep "Reads with adapters" $i >> cutadapt_overall_report.txt 
-grep "Reads written (passing filters):" $i >> cutadapt_overall_report.txt 
+grep "Pairs discarded" $i >> cutadapt_overall_report.txt 
+grep "Pairs written:" $i >> cutadapt_overall_report.txt 
 done
 
-mv cutadapt_overall_report.txt ../final_data/logs/
-cd ..
+cd ../../..
 echo finished primer trimming. $(date +"%T")
 sleep 3
 
