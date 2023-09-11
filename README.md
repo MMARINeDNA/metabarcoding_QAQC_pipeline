@@ -2,6 +2,7 @@
 
 This pipeline performs metabarcoding analysis using Cutadapt and DADA2. For more information on usage and dependencies, visit the wiki: https://github.com/MMARINeDNA/metabarcoding_QAQC_pipeline/wiki
 
+For test data, visit the Zenodo: https://zenodo.org/record/8303276
 
 ## Overview of Metabarcoding Pipeline:
 
