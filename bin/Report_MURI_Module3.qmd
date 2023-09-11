@@ -10,6 +10,7 @@ format:
 params:
   marker: "primer missing"
   working_dir: "path input missing"
+  run_name: "run name missing"
 ---
 
 ```{r libraries, message=FALSE, warning=FALSE}
@@ -80,7 +81,7 @@ md<- merge(x = miseq_sheet, y = sample_metadata, by="sampleID", all.x = TRUE)
 rownames(md)<-md$Sample_ID
 md <- md[grep(params$marker, rownames(md)), ]
 md$depth_class <- with(md, ifelse(depth < 5, 'surface (0 m)', 'depth (50 m)'))
-
+write.csv()
 ```
 
 ```{r ASV table}
