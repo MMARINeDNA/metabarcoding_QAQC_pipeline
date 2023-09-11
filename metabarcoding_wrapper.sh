@@ -58,6 +58,7 @@ echo primer: ${marker} detected.  Rendering qmd and phyloseq Rdata
 quarto render ./scripts/Report_MURI_Module3.qmd -P marker:${marker} -P working_dir:$(pwd) -P run_name:${RUN_NAME} --to html 
 mv ./phyloseq_final.Rdata ../final_data/rdata_output/${RUN_NAME}_${marker}_phyloseq_final.Rdata
 mv ./Report_MURI_Module3.html ../analysis_output/${RUN_NAME}_${marker}_Report_MURI_Module3.html
+mv ./${RUN_NAME}_merged_metadata.csv ../analysis_output/${RUN_NAME}_merged_metadata.csv
 done
 cd ..
 echo finished step 3. $(date +"%T")

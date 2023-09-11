@@ -81,7 +81,7 @@ md<- merge(x = miseq_sheet, y = sample_metadata, by="sampleID", all.x = TRUE)
 rownames(md)<-md$Sample_ID
 md <- md[grep(params$marker, rownames(md)), ]
 md$depth_class <- with(md, ifelse(depth < 5, 'surface (0 m)', 'depth (50 m)'))
-write.csv()
+write.csv(md,file=paste0(run_name,"_merged_metadata.csv"))
 ```
 
 ```{r ASV table}
