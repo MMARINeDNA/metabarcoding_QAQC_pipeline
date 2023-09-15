@@ -1,5 +1,5 @@
 ---
-title: "Report MURI"
+title: "Report"
 date: '`r format(Sys.time(), "%d %m %Y")`'
 format: 
   html: 
@@ -39,7 +39,7 @@ This document reports the results of the metabarcoding data from the MURI projec
 
 Here is a provisional but informative map, the idea is to implement some R code in here to start creating maps for future analyses.
 
-```{r echo=FALSE, fig.cap="Sampling scheme", out.width = '80%', fig.align= "center"}
+```{r echo=FALSE, fig.cap="Sampling scheme", out.width = '100%', fig.align= "center"}
 knitr::include_graphics(paste0(params$working_dir,("/metadata/pictures/muri.png")))
 
 ```
@@ -108,10 +108,20 @@ MD<-phyloseq::sample_data(md)
 ps<-phyloseq::phyloseq(ASV,TAXA,MD)
 ```
 
-```{r}
-#sample_names(ps)
-#rank_names(ps)
-#sample_variables(ps)
+```{r Create taxon table, warning=FALSE, message=FALSE}	
+ASV.df<-as.data.frame(ASV)%>%		
+  rownames_to_column(var="seqID") %>% 		
+  pivot_longer(cols=-seqID,names_to = "Sample_name", values_to = "nReads")	
+  		
+TAXA.df<-as.data.frame(TAXA)%>%		
+  rownames_to_column(var="seqID")		
+species.site.reads <- ASV.df %>% 		
+  left_join(TAXA.df, by="seqID") %>% 		
+  filter(!is.na(Family)) %>% 		
+  group_by(Sample_name, Species) %>% 		
+  summarise(nReads = sum(nReads)) %>% 		
+  pivot_wider(names_from = Sample_name, values_from = nReads, values_fill = 0) 		
+write.csv(species.site.reads, "../final_data/csv_output/taxon_table.csv")
 ```
 
 ```{r}
@@ -122,13 +132,13 @@ ps <- phyloseq::merge_phyloseq(ps, dna)
 phyloseq::taxa_names(ps) <- paste0("ASV", seq(phyloseq::ntaxa(ps)))
 
 # merge asvs by species
-ps.sp <- phyloseq::tax_glom(ps, "Species")
+ps.sp <- phyloseq::tax_glom(ps, "Class")
 sp.tax <- ps.sp@tax_table@.Data
 ```
 
 ### **3. Number of replicates per station**
 
-```{r warning=FALSE}
+```{r warning=FALSE, fig.width=8, fig.height=5}
 sdt = data.table(as(sample_data(ps.sp), "data.frame"),
                    TotalReads = sample_sums(ps.sp), keep.rownames = TRUE)
 
@@ -141,13 +151,13 @@ sdt = data.table(as(sample_data(ps.sp), "data.frame"),
   scale_x_log10() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, size = 5),
         axis.text.y = element_text(vjust = 0.5, size = 5),
-        text = element_text(vjust = 0.5, size = 9)))
+        text = element_text(vjust = 0.5, size = 8)))
 
 ```
 
 ### **4. Read lengths evaluation**
 
-```{r  warning=FALSE}
+```{r  warning=FALSE, fig.width=8, fig.height=3.5}
 # Calculate sequence lengths
 seq_lengths <- nchar(colnames(seqtab.nochim))
 # Create a histogram plot
@@ -164,18 +174,10 @@ p
 
 Frequency distribution of the sequencing depths per sample.
 
-```{r Read counts per sample, warning=FALSE}
+```{r Read counts per sample, warning=FALSE, fig.width=8, fig.height=3.5}
 (pSeqDepth=ggplot2::ggplot(sdt, ggplot2::aes(TotalReads)) + 
-  ggplot2::geom_histogram(binwidth = 10000, fill = "grey", color = "black") + 
+  ggplot2::geom_histogram(binwidth = 1000, fill = "grey", color = "black") + 
    ggtitle("Sequencing Depth freq"))
-```
-
-```{r }
-#pSeqDepth + facet_wrap(~station)+
- # theme(axis.text.x = element_text(angle = 90, vjust = 0.5,size=5),
-  #      axis.text.y = element_text(vjust = 0.5,size=5),
-   #     text = element_text(vjust = 0.5,size=9))+
-     #     ggtitle("Sequencing Depth freq per station")
 ```
 
 This graph is informative on the resultant number of replicates per station after dada2.
@@ -184,7 +186,7 @@ This graph is informative on the resultant number of replicates per station afte
 
 Frequency distribution of the sequencing depths per ASV.
 
-```{r warning=FALSE}
+```{r warning=FALSE, fig.width=8, fig.height=3.5}
 tdt = data.table(tax_table(ps.sp),
                  TotalCounts = taxa_sums(ps.sp),
                  asv = phyloseq::taxa_names(ps.sp))
@@ -196,7 +198,7 @@ ggplot2::ggplot(tdt, ggplot2::aes(TotalCounts)) +
 
 ### 7. ASV accumulation curve
 
-```{r Taxa accumulation curve}
+```{r Taxa accumulation curve, fig.width=8, fig.height=3.5}
 # taxa cumulative sum
 taxcumsum = tdt[, .N, by = TotalCounts]
 setkey(taxcumsum, TotalCounts)
@@ -212,23 +214,44 @@ pCumSum
 
 ### **8. Diversity indices**
 
-Observed ASV's (Chao1) and Simpson.
+Observed ASV's and Simpson.
 
-```{r warning=FALSE}
+```{r warning=FALSE, fig.width=6, fig.height=5}
+stations=md$station
 pAlpha = plot_richness(ps.sp, x="station",
                        color = "depth_class",
-                       measures =c("Chao1"))+
+                       measures =c("Observed"))+
                         theme_linedraw()+
-              theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1,size=7))
+        theme(axis.title=element_text(size = 7),
+        axis.text.y = element_text(vjust = 0.5, hjust=1,size = 7),
+        axis.text.x = element_text(angle=90,hjust = 1, size = 6, face = "bold"),
+        axis.ticks.x=element_blank(),
+        legend.position = "none") +
+        facet_wrap(~depth_class,dir = "v")+
+        ggtitle("Observed taxa")+
+        ylab("Value") +
+        xlab("Station")+
+        scale_x_discrete(labels = stations)+
+        scale_fill_hue(l = 70, c = 150)
 pAlpha
 ```
 
-```{r warning=FALSE}
+```{r warning=FALSE, fig.width=6, fig.height=5}
 pAlpha = plot_richness(ps.sp, x="station",
                        color = "depth_class",
                        measures =c("Simpson"))+
                         theme_linedraw()+
-              theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1,size=7))
+        theme(axis.title=element_text(size = 7),
+        axis.text.y = element_text(vjust = 0.5, hjust=1,size = 7),
+        axis.text.x = element_text(angle=90,hjust = 1, size = 6, face = "bold"),
+        axis.ticks.x=element_blank(),
+        legend.position = "none") +
+        facet_wrap(~depth_class,dir = "v")+
+        ggtitle("Simpson diversity")+
+        ylab("Value") +
+        xlab("Station")+
+        scale_x_discrete(labels = stations)+
+        scale_fill_hue(l = 70, c = 150)
 pAlpha
 ```
 
@@ -236,156 +259,280 @@ pAlpha
 
 ```{r}
 ps.sp.prop <- transform_sample_counts(ps.sp, function(x) x/sum(x))
-```
-
-```{r warning=FALSE,eval=FALSE}
-gp.ch = subset_taxa(ps.sp.prop, Class == "Actinopteri")
-mdf = psmelt(gp.ch)
-p <- ggplot2::ggplot(mdf, ggplot2::aes(x = station, y = Abundance, fill = Family)) +
-  geom_bar(stat = "identity") +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 7),
-        axis.text.y = element_text(vjust = 0.5, hjust = 1, size = 7),
-        legend.title = element_text(size = 8),
-        legend.text = element_text(size = 7),
-        legend.position = "right",
-        legend.key.size = unit(0.5, "cm"))+
-  scale_y_continuous(name="Relative abundance", limits=c(0, 1))+
-   ggtitle("Actinopteri")+
-   ylab("Relative abundance") +
-   xlab("Station")+
-  scale_fill_hue(l = 70, c = 150)
-  
-print(p)
-```
-
-```{r, warning=FALSE,eval=FALSE}
-gp.ch = subset_taxa(ps.sp.prop, Class == "Chondrichthyes")
-mdf = psmelt(gp.ch)
-p <- ggplot2::ggplot(mdf, ggplot2::aes(x = station, y = Abundance, fill = Species)) +
-  geom_bar(stat = "identity") +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 7),
-        axis.text.y = element_text(vjust = 0.5, hjust = 1, size = 7),
-        legend.title = element_text(size = 8),
-        legend.text = element_text(size = 7),
-        legend.position = "right",
-        legend.key.size = unit(0.7, "cm"))+
-      #scale_y_continuous(name="Relative abundance", limits=c(0, 1))+
-     ggtitle("Chondrichthyes")+
-   ylab("Relative abundance") +
-  xlab("Station")+
-  scale_fill_hue(l = 70, c = 150)
-print(p)
-```
-
-```{r warning=FALSE,eval=FALSE}
-gp.ch = subset_taxa(ps.sp.prop, Order == "Artiodactyla")
-mdf = psmelt(gp.ch)
-p <- ggplot2::ggplot(mdf, ggplot2::aes(x = station, y = Abundance, fill = Family)) +
-  geom_bar(stat = "identity") +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 7),
-        axis.text.y = element_text(vjust = 0.5, hjust = 1, size = 7),
-        legend.title = element_text(size = 8),
-        legend.text = element_text(size = 7),
-        legend.position = "right",
-        legend.key.size = unit(0.7, "cm"))+
-  #scale_y_continuous(name="Relative abundance", limits=c(0, 0.5))+
-   ggtitle("Artiodactyla")+
-  # ylab("Relative abundance") +
-   xlab("Station")+
-  scale_fill_hue(l = 70, c = 150)
-print(p)
-```
-
-```{r, warning =FALSE,eval=FALSE}
-plot_bar(ps.sp.prop, fill="Class") +
-      theme(axis.title=element_text(size = 7),
-        legend.title = element_text(size = 8),
-        axis.text.y = element_text(vjust = 0.5, hjust=1,size = 5),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank(),
-        legend.text = element_text(size = 7),
-        strip.text.x = element_text(size = 7),
-        legend.position = "right",
-        legend.key.size = unit(0.5, "cm")) +
-  xlab("Station") +
-  facet_wrap(~station,scales = "free_x") +
-  ggtitle("Class (all)")+
-   ylab("Relative abundance") +
-   xlab("Station")+
-  scale_fill_hue(l = 70, c = 150)
-```
-
-```{r Order_prop_barplot, warning=FALSE,eval=FALSE}
-plot_bar(ps.sp.prop, fill="Order") +
-  theme(axis.title=element_text(size = 7),
-        legend.title = element_text(size = 8),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank(),
-        axis.text.y = element_text(vjust = 0.5, hjust=1,size = 5),
-        legend.text = element_text(size = 7),
-        legend.key.size = unit(0.3, 'cm'),
-        strip.text.x = element_text(size = 7),
-        legend.position = "right") +
-  xlab("Station") +
-  facet_wrap(~station, scales = "free_x")+
-    ggtitle("Order (all)")+
-   ylab("Relative abundance") +
-   xlab("Station")+
-  scale_fill_hue(l = 70, c = 150)
-```
-
-```{r,  warning=FALSE,eval=FALSE}
-ps_with_fish <- subset_taxa(ps.sp.prop, Class == "Actinopteri")
-
-plot_bar(ps_with_fish, fill="Genus") +
-  theme(axis.title=element_text(size = 7),
-        legend.title = element_text(size = 8),
-        axis.text.y = element_text(vjust = 0.5, hjust=1,size = 5),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank(),
-        legend.text = element_text(size = 7),
-        legend.key.size = unit(0.3, 'cm'),
-        strip.text.x = element_text(size = 7),
-        legend.position = "right") +
-  xlab("Station") +
-  facet_wrap(~station, scales = "free_x")+
-    ggtitle("Actinopteri")+
-   ylab("Relative abundance") +
-   xlab("Station")+
-  scale_fill_hue(l = 70, c = 150)
-```
-
-```{r  , warning=FALSE,eval=FALSE}
-ps_with_mm <- subset_taxa(ps.sp.prop, Family == "Delphinidae" | Family =="Balaenopteridae" | Family == "Eschrichtiidae"| Family == "Phocoenidae")
-
-plot_bar(ps_with_mm, fill="Species") +
- theme(axis.title=element_text(size = 7),
-        legend.title = element_text(size = 8),
-        axis.text.y = element_text(vjust = 0.5, hjust=1,size = 5),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank(),
-        legend.text = element_text(size = 7),
-        legend.key.size = unit(0.3, 'cm'),
-        strip.text.x = element_text(size = 7),
-        legend.position = "right") +
-  xlab("Station") +
-  facet_wrap(~station, scales = "free_x")+
-  ggtitle("Marine mammals")+
-  ylab("Relative abundance") +
-  xlab("Station")+
-  scale_fill_hue(l = 70, c = 150)
+check_df <- as.data.frame(tax_table(ps.sp.prop))
 ```
 
 ```{r}
+if(any(check_df$Class=="Cephalopoda")){
+ps_cephalopoda <- subset_taxa(ps.sp.prop, Class == "Cephalopoda")
+}
+```
 
-# Create a factor corresponding to the Genera
-#genfac = factor(tax_table(ps)[, "Species"])
-# Tabulate the counts for each genera in each sample
-#gentab = apply(otu_table(ps), MARGIN = 2, function(x) {
-#    tapply(x, INDEX = genfac, FUN = sum, na.rm = FALSE, simplify = TRUE)
-#})
-#gentab
+```{r}
+if(any(check_df$Class=="Cephalopoda")){
+plot_bar(ps_cephalopoda, fill="Class") +
+  theme_linedraw()+
+  theme(axis.title=element_text(size = 8),
+        legend.title = element_text(size = 9),
+        axis.text.y = element_text(vjust = 0.5, size = 7),
+        axis.ticks.x=element_blank(),
+        axis.text.x = element_text(angle=90,hjust = 1, size = 6, face = "bold",
+                                   margin = margin(0,0,0,0)),
+        legend.text = element_text(size = 7),
+        legend.key.size = unit(0.3, 'cm'),
+        strip.text.x = element_text(size = 7),
+        legend.position = "right") +
+        facet_wrap(~depth_class, dir = "v")+
+        ggtitle("Cephalopoda")+
+        ylab("Relative abundance") +
+        xlab("Station")+
+        scale_x_discrete(labels = stations)+
+        scale_fill_hue(l = 70, c = 150)
+}
+```
 
+```{r}
+if(any(check_df$Class=="Actinopteri")){
+ps_actinopteri <- subset_taxa(ps.sp.prop, Class == "Actinopteri")
+}
+```
+
+```{r, warning=FALSE, fig.width=10, fig.height=6}
+if(any(check_df$Class=="Actinopteri")){
+plot_bar(ps_actinopteri, fill="Order") +
+  theme_linedraw()+
+  theme(axis.title=element_text(size = 8),
+        legend.title = element_text(size = 9),
+        axis.text.y = element_text(vjust = 0.5, size = 7),
+        axis.ticks.x=element_blank(),
+        axis.text.x = element_text(angle=90,hjust = 1, size = 6, face = "bold",
+                                   margin = margin(0,0,0,0)),
+        legend.text = element_text(size = 7),
+        legend.key.size = unit(0.3, 'cm'),
+        strip.text.x = element_text(size = 7),
+        legend.position = "right") +
+        facet_wrap(~depth_class, dir = "v")+
+        ggtitle("Actinopteri")+
+        ylab("Relative abundance") +
+        xlab("Station")+
+        scale_x_discrete(labels = stations)+
+        scale_fill_hue(l = 70, c = 150)
+}
+```
+
+```{r warning=FALSE, fig.width=10, fig.height=6}
+if(any(check_df$ Order == "Clupeiformes")){
+ps_clupeiformes <- subset_taxa(ps.sp.prop, Order == "Clupeiformes")
+plot_bar(ps_clupeiformes, fill="Species") +
+  theme_linedraw()+
+  theme(axis.title=element_text(size = 8),
+        legend.title = element_text(size = 9),
+        axis.text.y = element_text(vjust = 0.5, hjust=1,size = 7),
+        axis.text.x = element_text(angle=90, hjust=1,size = 6, 
+                                   margin = margin(0,0,0,0)),
+        axis.ticks.x=element_blank(),
+        legend.text = element_text(size = 7, face = "italic"),
+        legend.key.size = unit(0.3, 'cm'),
+        legend.position = "right") +
+        facet_wrap(~depth_class, dir = "v")+
+        guides(fill=guide_legend(ncol =1))+
+        ggtitle("Clupeiformes")+
+        ylab("Relative abundance") +
+        xlab("Station")+
+        scale_x_discrete(labels = stations)+
+        scale_fill_hue(l = 70, c = 150)
+}
+```
+
+```{r warning=FALSE, fig.width=10, fig.height=6}
+if(any(check_df$Order == "Gadiformes")){
+ps_salmoniformes <- subset_taxa(ps.sp.prop, Order == "Gadiformes")
+plot_bar(ps_salmoniformes, fill="Species") +
+  theme_linedraw()+
+  theme(axis.title=element_text(size = 8),
+        legend.title = element_text(size = 9),
+        axis.text.y = element_text(vjust = 0.5, hjust=1,size = 7),
+        axis.text.x = element_text(angle=90,vjust = 0.5, hjust=1,size = 7,
+                                    margin = margin(0,0,0,0)),
+        axis.ticks.x=element_blank(),
+        legend.text = element_text(size = 7,face = "italic"),
+        legend.key.size = unit(0.3, 'cm'),
+        legend.position = "right") +
+        facet_wrap(~depth_class,dir = "v")+
+        ggtitle("Gadiformes")+
+        ylab("Relative abundance") +
+        xlab("Station")+
+        scale_x_discrete(labels = stations)+
+        scale_fill_hue(l = 70, c = 150)
+}
+```
+
+```{r, warning=FALSE, fig.width=10, fig.height=6}
+if(any(check_df$Order == "Perciformes")){
+ps_salmoniformes <- subset_taxa(ps.sp.prop, Order == "Perciformes")
+plot_bar(ps_salmoniformes, fill="Species") +
+  theme_linedraw()+
+  theme(axis.title=element_text(size = 8),
+        legend.title = element_text(size = 9),
+        axis.text.y = element_text(vjust = 0.5, hjust=1,size = 7),
+        axis.text.x = element_text(angle=90,vjust = 0.5, hjust=1,size = 7,
+                                   margin = margin(0,0,0,0)),
+        axis.ticks.x=element_blank(),
+        legend.text = element_text(size = 7, face = "italic"),
+        legend.key.size = unit(0.3, 'cm'),
+        legend.position = "right") +
+        facet_wrap(~depth_class,dir = "v")+
+        ggtitle("Perciformes")+
+        ylab("Relative abundance") +
+        xlab("Station")+
+        scale_x_discrete(labels = stations)+
+        scale_fill_hue(l = 70, c = 150)
+}
+```
+
+```{r, warning=FALSE, fig.width=10, fig.height=6}
+if(any(check_df$Order == "Myctophiformes")){
+ps_salmoniformes <- subset_taxa(ps.sp.prop, Order == "Myctophiformes")
+plot_bar(ps_salmoniformes, fill="Species") +
+  theme_linedraw()+
+  theme(axis.title=element_text(size = 8),
+        legend.title = element_text(size = 9),
+        axis.text.y = element_text(vjust = 0.5, hjust=1,size = 7),
+        axis.text.x = element_text(angle=90,vjust = 0.5, hjust=1,size = 7,
+                                   margin = margin(0,0,0,0)),
+        axis.ticks.x=element_blank(),
+        legend.text = element_text(size = 7,face = "italic"),
+        legend.key.size = unit(0.3, 'cm'),
+        legend.position = "right") +
+        facet_wrap(~depth_class,dir = "v")+
+        ggtitle("Myctophiformes")+
+        ylab("Relative abundance") +
+        xlab("Station")+
+        scale_x_discrete(labels = stations)+
+        scale_fill_hue(l = 70, c = 150)
+}
+```
+
+```{r, warning=FALSE, fig.width=10, fig.height=6}
+if(any(check_df$Order == "Pleuronectiformes")){
+ps_salmoniformes <- subset_taxa(ps.sp.prop, Order == "Pleuronectiformes")
+plot_bar(ps_salmoniformes, fill="Species") +
+  theme_linedraw()+
+  theme(axis.title=element_text(size = 8),
+        legend.title = element_text(size = 9),
+        axis.text.y = element_text(vjust = 0.5, hjust=1,size = 7),
+        axis.text.x = element_text(angle=90,vjust = 0.5, hjust=1,size = 7,
+                                margin = margin(0,0,0,0)),   
+        axis.ticks.x=element_blank(),
+        legend.text = element_text(size = 7,face = "italic"),
+        legend.key.size = unit(0.3, 'cm'),
+        legend.position = "right") +
+        facet_wrap(~depth_class,dir = "v")+
+        ggtitle("Pleuronectiformes")+
+        ylab("Relative abundance") +
+        xlab("Station")+
+        scale_x_discrete(labels = stations)+
+        scale_fill_hue(l = 70, c = 150)
+}
+```
+
+```{r warning=FALSE, fig.width=10, fig.height=6}
+depth<-md$depth_class
+if(any(check_df$Order == "Cetacea")){
+ps_cetacea <- subset_taxa(ps.sp.prop, Order == "Cetacea")
+plot_bar(ps_cetacea, fill="Family") +
+  theme_linedraw()+
+  theme(axis.title=element_text(size = 8),
+        legend.title = element_text(size = 9),
+        axis.text.y = element_text(vjust = 0.5, hjust=1,size = 7),
+        axis.ticks.x=element_blank(),
+        axis.text.x = element_text(angle=90,vjust = 0.5, hjust=1,size = 7,
+                                margin = margin(0,0,0,0)), 
+        legend.text = element_text(size = 7),
+        legend.key.size = unit(0.3, 'cm'),
+        strip.text.x = element_text(size = 7),
+        legend.position = "right") +
+        facet_wrap(~depth_class,dir = "v")+
+        ggtitle("Cetacea")+
+        ylab("Relative abundance") +
+        xlab("Station")+
+        scale_x_discrete(labels = stations)+
+        scale_fill_hue(l = 70, c = 150)
+}
+
+```
+
+```{r, warning=FALSE, fig.width=10, fig.height=6}
+if(any(check_df$Order=="Cetacea")){
+ps_with_myst <- subset_taxa(ps_cetacea, Family == "Balaenopteridae"| Family=="Eschrichtiidae"|Family=="Balaenidae"|Family=="Neobalaenidae")
+
+plot_bar(ps_with_myst, fill="Species") +
+  theme_linedraw()+
+  theme(axis.title=element_text(size = 8),
+        legend.title = element_text(size = 9),
+        axis.text.y = element_text(vjust = 0.5, hjust=1,size = 7),
+        axis.ticks.x=element_blank(),
+        axis.text.x = element_text(angle=90,vjust = 0.5, hjust=1,size = 7,
+                                margin = margin(0,0,0,0)), 
+        legend.text = element_text(size = 7, face = "italic"),
+        legend.key.size = unit(0.3, 'cm'),
+        strip.text.x = element_text(size = 7),
+        legend.position = "right") +
+        facet_wrap(~depth_class,dir = "v")+
+        ggtitle("Mysticetes")+
+        ylab("Relative abundance") +
+        xlab("Station")+
+        scale_x_discrete(labels = stations)+
+        scale_fill_hue(l = 70, c = 150)
+}
+```
+
+```{r warning=FALSE, fig.width=10, fig.height=6}
+if(any(check_df$Order == "Cetacea")){
+ps_with_odon <- subset_taxa(ps_cetacea, Family == "Monodontidae"|Family == "Delphinidae"|Family == "Phocoenidae"|Family == "Ziphiidae"|Family=="Kogiidae"|Family=="Hyperoodontidae")
+plot_bar(ps_with_odon, fill="Species") +
+  theme_linedraw()+
+  theme(axis.title=element_text(size = 8),
+        legend.title = element_text(size = 9),
+        axis.text.y = element_text(vjust = 0.5, hjust=1,size = 7),
+        axis.ticks.x=element_blank(),
+        axis.text.x = element_text(angle=90,vjust = 0.5, hjust=1,size = 7,
+                                margin = margin(0,0,0,0)), 
+        legend.text = element_text(size = 7, face = "italic"),
+        legend.key.size = unit(0.3, 'cm'),
+        strip.text.x = element_text(size = 7),
+        legend.position = "right") +
+        facet_wrap(~depth_class,dir = "v")+
+        ggtitle("Odontocetes")+
+        ylab("Relative abundance") +
+        xlab("Station")+
+        scale_x_discrete(labels = stations)+
+        scale_fill_hue(l = 70, c = 150)
+}
+```
+
+```{r, warning=FALSE,fig.width=10, fig.height=6}
+if(any(check_df$Class=="Chondrichthyes")){
+ps_chondrichthyes <- subset_taxa(ps.sp.prop, Class == "Chondrichthyes")
+plot_bar(ps_chondrichthyes, fill="Species") +
+  theme_linedraw()+
+  theme(axis.title=element_text(size = 8),
+        legend.title = element_text(size = 9),
+        axis.text.y = element_text(vjust = 0.5, hjust=1,size = 7),
+        axis.ticks.x=element_blank(),
+        axis.text.x = element_text(angle=90,vjust = 0.5, hjust=1,size = 7,
+                                margin = margin(0,0,0,0)), 
+        legend.text = element_text(size = 7, face = "italic"),
+        legend.key.size = unit(0.3, 'cm'),
+        strip.text.x = element_text(size = 7),
+        legend.position = "right") +
+        facet_wrap(~depth_class,dir = "v")+
+        ggtitle("Chondrichthyes")+
+        ylab("Relative abundance") +
+        xlab("Station")+
+        scale_x_discrete(labels = stations)+
+        scale_fill_hue(l = 70, c = 150)
+}
 ```
 
 ### **10. Assigned and Non-assigned taxa**
