@@ -11,6 +11,10 @@ C16_F="GACGAGAAGACCCTAWTGAGCT"
 C16_R="AAATTACGCTGTTATCCCT"
 C18_F="CGCGGCGCTACATATTAGAC"
 C18_R="GCACTTAACCGACCGTCGAC"
+DLM1_F="CACCCAAAGCTGRARTTCT"
+DLM1_R="GCGGGTTGCTGGTTTCACG"
+DLL1_F="CACCCAAAGCTGRARTTCTDYATAAACT"
+DLL1_R="GCGGGTTGCTGGTTTCACG"
 
 
 CUTADAPT=$(which cutadapt)
@@ -65,6 +69,23 @@ ${CUTADAPT} -g ${C18_F} \
     --discard-untrimmed \
     -j 0 \
 "${R1}" "${R2}" 1> "../final_data/logs/cutadapt_reports/${FILE_NAME}_trim_report.txt"
-
+elif [[ ${FILE_PRIM} == "DLM1" ]]; then
+echo DL Detected
+${CUTADAPT} -g ${DLM1_F} \
+     -G "${DLM1_R}" \
+     -o ../for_dada2/${R1} \
+     -p ../for_dada2/${R2} \
+    --discard-untrimmed \
+    -j 0 \
+"${R1}" "${R2}" 1> "../final_data/logs/cutadapt_reports/${FILE_NAME}_trim_report.txt"
+elif [[ ${FILE_PRIM} == "DLL1" ]]; then
+echo DL Detected
+${CUTADAPT} -g ${DLL1_F} \
+     -G "${DLL1_R}" \
+     -o ../for_dada2/${R1} \
+     -p ../for_dada2/${R2} \
+    --discard-untrimmed \
+    -j 0 \
+"${R1}" "${R2}" 1> "../final_data/logs/cutadapt_reports/${FILE_NAME}_trim_report.txt"
 fi
 done
